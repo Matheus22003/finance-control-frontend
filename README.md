@@ -15,4 +15,4 @@ Frontend em Angular para o sistema de controle financeiro pessoal.
 
 ## 📚 Documentação
 Arquitetura e contratos estão documentados em:
-➡️ https://github.com/SEU_USUARIO/finance-control-docs
+➡️ https://github.com/Matheus22003/finance-control-docs
