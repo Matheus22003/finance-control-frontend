@@ -2,10 +2,17 @@
 
 Frontend em Angular para o sistema de controle financeiro pessoal.
 
-## Comunicação
-O frontend se comunica **exclusivamente com o BFF**.
+## Responsabilidades
+- Interface do usuário
+- Dashboard financeiro
+- Gestão de gastos e dívidas
+- Comunicação com o BFF
 
 ## Stack
 - Angular
-- JWT
 - REST
+- JWT
+
+## 📚 Documentação
+Arquitetura e contratos estão documentados em:
+➡️ https://github.com/SEU_USUARIO/finance-control-docs
