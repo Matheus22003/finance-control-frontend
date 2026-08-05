@@ -1,0 +1,108 @@
+.page-header svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-width: 2;
+}
+
+.people-toolbar {
+  min-height: 44px;
+}
+
+.people-count {
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.people-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.person-card {
+  display: grid;
+  min-width: 0;
+  padding: 20px;
+  gap: 18px;
+}
+
+.person-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.person-avatar {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  place-items: center;
+  background: var(--action-primary-soft);
+  color: var(--action-primary);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.current-user-badge {
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: var(--background-subtle);
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+  font-weight: 750;
+}
+
+.person-copy {
+  min-width: 0;
+}
+
+.person-copy h2 {
+  overflow: hidden;
+  margin: 0;
+  font-size: 0.98rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-copy p {
+  overflow: hidden;
+  margin: 5px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.person-balance {
+  display: grid;
+  padding: 13px;
+  border-radius: 11px;
+  background: var(--background-subtle);
+  gap: 5px;
+}
+
+.person-balance span {
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+}
+
+.person-balance strong {
+  color: var(--status-positive);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 1120px) {
+  .people-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 620px) {
+  .people-grid {
+    grid-template-columns: 1fr;
+  }
+}

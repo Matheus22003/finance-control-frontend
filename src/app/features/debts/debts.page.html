@@ -1,0 +1,834 @@
+<section class="data-page">
+  <header class="page-header">
+    <div>
+      <h1>Dívidas</h1>
+      <p>Divida despesas sem perder de vista quem deve para quem.</p>
+    </div>
+    <button class="primary-button" type="button" (click)="openNewDebt()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      Nova dívida
+    </button>
+  </header>
+
+  @if (successMessage()) {
+    <div class="success-toast" role="status">
+      <span aria-hidden="true">✓</span>
+      {{ successMessage() }}
+      <button type="button" aria-label="Fechar aviso" (click)="successMessage.set(null)">×</button>
+    </div>
+  }
+
+  <div class="metric-grid">
+    <article class="metric-card surface-card negative">
+      <span>Você deve</span><strong>{{ summary().totalOwed | currency: 'BRL' }}</strong>
+    </article>
+    <article class="metric-card surface-card positive">
+      <span>Devem a você</span><strong>{{ summary().totalToReceive | currency: 'BRL' }}</strong>
+    </article>
+    <article class="metric-card surface-card">
+      <span>Dívidas em aberto</span><strong>{{ summary().openDebtsCount }}</strong>
+    </article>
+  </div>
+
+  <div class="debt-layout">
+    <article class="content-card surface-card">
+      <header class="content-card-header">
+        <h2>Dívidas compartilhadas</h2>
+        <span>{{ debts().length }} registro(s)</span>
+      </header>
+      @if (isLoading()) {
+        <div class="loading-state">Carregando dívidas…</div>
+      } @else if (hasError()) {
+        <div class="empty-state">
+          <span class="empty-state-icon">!</span>
+          <h3>Não foi possível carregar</h3>
+          <p>Verifique a conexão com o BFF e tente novamente.</p>
+          <button class="secondary-button" type="button" (click)="loadDebts()">
+            Tentar novamente
+          </button>
+        </div>
+      } @else if (debts().length === 0) {
+        <div class="empty-state">
+          <span class="empty-state-icon">↔</span>
+          <h3>Nenhuma dívida compartilhada</h3>
+          <p>Quando alguém pagar uma despesa pelo grupo, registre aqui e acompanhe cada parte.</p>
+          <button class="secondary-button" type="button" (click)="openNewDebt()">
+            Criar primeira dívida
+          </button>
+        </div>
+      } @else {
+        <div class="debt-list">
+          @for (debt of debts(); track debt.id) {
+            <article class="debt-item">
+              <div class="debt-topline">
+                <span class="category-icon">{{ categoryInitials(debt.category) }}</span>
+                <span class="debt-copy"
+                  ><strong>{{ debt.description }}</strong
+                  ><small
+                    >{{ categoryLabel(debt.category) }} · pago por {{ debt.paidBy.name }}
+                    @if (debt.groupId) {
+                      · {{ groupLabel(debt.groupId) }}
+                    }
+                  </small></span
+                >
+                <span class="status-badge" [class.paid]="debt.status === 'PAID'">{{
+                  debt.status === 'PAID' ? 'Paga' : 'Em aberto'
+                }}</span>
+                <span class="debt-actions">
+                  <button
+                    type="button"
+                    title="Editar dívida"
+                    [attr.aria-label]="'Editar ' + debt.description"
+                    (click)="openEditDebt(debt)"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="m4 20 4.4-1 9.8-9.8-3.4-3.4L5 15.6 4 20Z" />
+                      <path d="m13.8 6.8 3.4 3.4" />
+                    </svg>
+                  </button>
+                  <button
+                    class="danger"
+                    type="button"
+                    title="Excluir dívida"
+                    [attr.aria-label]="'Excluir ' + debt.description"
+                    (click)="requestDelete(debt)"
+                  >
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" />
+                    </svg>
+                  </button>
+                </span>
+              </div>
+              <div class="debt-details">
+                <span
+                  ><small>Valor total</small
+                  ><strong>{{ debt.totalAmount | currency: 'BRL' }}</strong></span
+                >
+                <span
+                  ><small>Participantes</small><strong>{{ debt.shares.length }}</strong></span
+                >
+                <span
+                  ><small>Vencimento</small
+                  ><strong>{{
+                    debt.dueDate ? (debt.dueDate | date: 'dd MMM yyyy') : 'Sem data'
+                  }}</strong></span
+                >
+                <button class="details-toggle" type="button" (click)="toggleDetails(debt.id)">
+                  {{ expandedDebtId() === debt.id ? 'Ocultar divisão' : 'Ver divisão' }}
+                  <span aria-hidden="true">{{ expandedDebtId() === debt.id ? '↑' : '↓' }}</span>
+                </button>
+              </div>
+
+              @if (expandedDebtId() === debt.id) {
+                <div class="share-details">
+                  @for (share of debt.shares; track share.id) {
+                    <div class="share-detail-row">
+                      <span class="person-avatar">{{
+                        share.person.name.slice(0, 2).toUpperCase()
+                      }}</span>
+                      <span class="share-person">
+                        <strong>{{ share.person.name }}</strong>
+                        <small>
+                          @if (share.isPayer) {
+                            Também pagador ·
+                          }
+                          Pago {{ share.paidAmount | currency: 'BRL' }}
+                        </small>
+                      </span>
+                      <span class="share-values">
+                        <strong>{{ share.amount | currency: 'BRL' }}</strong>
+                        <small>Falta {{ share.remainingAmount | currency: 'BRL' }}</small>
+                      </span>
+                      @if (canRecordPayment(debt, share)) {
+                        <button
+                          class="record-payment-button"
+                          type="button"
+                          (click)="openPayment(debt, share)"
+                        >
+                          Registrar pagamento
+                        </button>
+                      }
+                    </div>
+                  }
+
+                  <section class="debt-activity" aria-label="Pagamentos e histórico">
+                    @if (loadingActivityDebtId() === debt.id) {
+                      <div class="activity-loading">Carregando movimentações…</div>
+                    } @else {
+                      @if (activityError()) {
+                        <div class="operation-error" role="alert">{{ activityError() }}</div>
+                      }
+
+                      <div class="activity-column">
+                        <h3>Pagamentos</h3>
+                        @if (paymentsFor(debt.id).length === 0) {
+                          <p class="activity-empty">Nenhum pagamento registrado.</p>
+                        } @else {
+                          @for (payment of paymentsFor(debt.id); track payment.id) {
+                            <article class="payment-row">
+                              <span class="payment-route">
+                                <strong>{{ payment.fromPerson.name }}</strong>
+                                <small
+                                  >para {{ payment.toPerson.name }} ·
+                                  {{ payment.paymentDate | date: 'dd/MM/yyyy' }}</small
+                                >
+                              </span>
+                              <strong class="payment-amount">{{
+                                payment.amount | currency: 'BRL'
+                              }}</strong>
+                              <span
+                                class="payment-status"
+                                [class]="'payment-status ' + payment.status.toLowerCase()"
+                              >
+                                {{ paymentStatusLabel(payment.status) }}
+                              </span>
+                              @if (payment.canConfirm || payment.canReject) {
+                                <span class="payment-actions">
+                                  <button
+                                    class="secondary-button"
+                                    type="button"
+                                    [disabled]="processingPaymentId() === payment.id"
+                                    (click)="rejectPayment(debt.id, payment.id)"
+                                  >
+                                    Recusar
+                                  </button>
+                                  <button
+                                    class="primary-button"
+                                    type="button"
+                                    [disabled]="processingPaymentId() === payment.id"
+                                    (click)="confirmPayment(debt.id, payment.id)"
+                                  >
+                                    Confirmar
+                                  </button>
+                                </span>
+                              }
+                            </article>
+                          }
+                        }
+                      </div>
+
+                      <div class="activity-column history-column">
+                        <h3>Histórico</h3>
+                        @for (entry of historyFor(debt.id); track entry.id) {
+                          <div class="history-row">
+                            <span aria-hidden="true"></span>
+                            <p>
+                              <strong>{{ historyLabel(entry.type) }}</strong>
+                              <small>{{ entry.occurredAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+                            </p>
+                          </div>
+                        } @empty {
+                          <p class="activity-empty">Nenhuma movimentação registrada.</p>
+                        }
+                      </div>
+                    }
+                  </section>
+                </div>
+              }
+            </article>
+          }
+        </div>
+      }
+    </article>
+
+    <aside class="settlement-panel surface-card">
+      <div class="settlement-heading">
+        <span class="settlement-icon">⇄</span>
+        <div>
+          <h2>Pagamentos simplificados</h2>
+          <p>Menos transferências dentro do mesmo grupo.</p>
+        </div>
+      </div>
+      <label class="settlement-scope" for="settlement-group">
+        <span>Calcular para</span>
+        <select
+          id="settlement-group"
+          [value]="settlementGroupId()"
+          [disabled]="isLoadingSettlements()"
+          (change)="selectSettlementGroup($any($event.target).value)"
+        >
+          <option value="">Dívidas sem grupo</option>
+          @for (group of groups(); track group.id) {
+            <option [value]="group.id">{{ group.name }}</option>
+          }
+        </select>
+      </label>
+      <div class="settlement-highlight">
+        @if (isLoadingSettlements()) {
+          <strong>…</strong>
+          <span>calculando o melhor plano</span>
+        } @else {
+          <strong>{{ settlements().simplifiedTransferCount }}</strong>
+          <span>em vez de {{ settlements().originalTransferCount }} transferências</span>
+        }
+      </div>
+      @if (settlementError()) {
+        <div class="settlement-error" role="alert">{{ settlementError() }}</div>
+      } @else if (settlements().transfers.length > 0) {
+        <div class="transfer-list">
+          @for (
+            transfer of settlements().transfers;
+            track transfer.fromPerson.id + transfer.toPerson.id
+          ) {
+            <div class="transfer-item">
+              <span>{{ transfer.fromPerson.name }}</span>
+              <small>paga para {{ transfer.toPerson.name }}</small>
+              <strong>{{ transfer.amount | currency: 'BRL' }}</strong>
+              @if (activeSettlementTransfer(transfer); as activeTransfer) {
+                <span
+                  class="settlement-transfer-status"
+                  [class.pending]="activeTransfer.status === 'PENDING'"
+                  [class.confirmed]="activeTransfer.status === 'CONFIRMED'"
+                >
+                  {{ settlementTransferStatus(activeTransfer) }}
+                </span>
+                @if (activeTransfer.canRecord) {
+                  <button
+                    class="secondary-button settlement-action"
+                    type="button"
+                    (click)="openSettlementPayment(transfer)"
+                  >
+                    Registrar pagamento
+                  </button>
+                }
+                @if (activeTransfer.canConfirm || activeTransfer.canReject) {
+                  <span class="settlement-confirm-actions">
+                    <button
+                      class="secondary-button"
+                      type="button"
+                      [disabled]="processingSettlementTransferId() === activeTransfer.id"
+                      (click)="rejectSettlementTransfer(activeTransfer.id)"
+                    >
+                      Recusar
+                    </button>
+                    <button
+                      class="primary-button"
+                      type="button"
+                      [disabled]="processingSettlementTransferId() === activeTransfer.id"
+                      (click)="confirmSettlementTransfer(activeTransfer.id)"
+                    >
+                      Confirmar recebimento
+                    </button>
+                  </span>
+                }
+              } @else if (transfer.fromPerson.isCurrentUser) {
+                <button
+                  class="secondary-button settlement-action"
+                  type="button"
+                  (click)="openSettlementPayment(transfer)"
+                >
+                  Registrar pagamento
+                </button>
+              } @else {
+                <span class="settlement-transfer-status">Aguardando o pagador</span>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="settlement-empty">
+          <span>✓</span>
+          <p>Nenhum pagamento pendente neste contexto.</p>
+        </div>
+      }
+      @if (savedTransferCount() > 0) {
+        <div class="settlement-saving">
+          {{ savedTransferCount() }} transferência(s) evitada(s)
+        </div>
+      }
+      @if (settlementOperationError()) {
+        <div class="settlement-error" role="alert">{{ settlementOperationError() }}</div>
+      }
+      <small class="suggestion-note">
+        Plano informativo: as dívidas só são baixadas após o registro e a confirmação dos
+        pagamentos.
+      </small>
+    </aside>
+  </div>
+</section>
+
+@if (settlementPaymentTarget(); as target) {
+  <div class="modal-backdrop payment-backdrop" (click)="closeSettlementPayment()">
+    <section
+      class="debt-modal payment-modal settlement-payment-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="settlement-payment-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow">PAGAMENTO SIMPLIFICADO</span>
+          <h2 id="settlement-payment-dialog-title">Registrar transferência</h2>
+          <p>
+            {{ target.transfer.fromPerson.name }} paga para
+            {{ target.transfer.toPerson.name }}. O destinatário deverá confirmar o recebimento.
+          </p>
+        </div>
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Fechar pagamento simplificado"
+          [disabled]="isSavingSettlementPayment()"
+          (click)="closeSettlementPayment()"
+        >
+          ×
+        </button>
+      </header>
+
+      <form [formGroup]="settlementPaymentForm" (ngSubmit)="saveSettlementPayment()" novalidate>
+        <div class="settlement-payment-amount">
+          <span>Valor sugerido</span>
+          <strong>{{ target.transfer.amount | currency: 'BRL' }}</strong>
+          <small>Valor fixado pelo saldo líquido do grupo.</small>
+        </div>
+        <div class="field">
+          <label for="settlement-payment-date">Data da transferência</label>
+          <input
+            id="settlement-payment-date"
+            type="date"
+            formControlName="paymentDate"
+          />
+        </div>
+        <div class="field">
+          <label for="settlement-payment-note">Observação <small>(opcional)</small></label>
+          <textarea
+            id="settlement-payment-note"
+            rows="3"
+            maxlength="500"
+            placeholder="Ex.: PIX enviado"
+            formControlName="note"
+          ></textarea>
+        </div>
+
+        @if (settlementOperationError()) {
+          <div class="operation-error" role="alert">{{ settlementOperationError() }}</div>
+        }
+
+        <footer class="modal-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isSavingSettlementPayment()"
+            (click)="closeSettlementPayment()"
+          >
+            Cancelar
+          </button>
+          <button class="primary-button" type="submit" [disabled]="isSavingSettlementPayment()">
+            {{ isSavingSettlementPayment() ? 'Enviando…' : 'Enviar para confirmação' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (paymentTarget(); as target) {
+  <div class="modal-backdrop payment-backdrop" (click)="closePayment()">
+    <section
+      class="debt-modal payment-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="payment-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow">NOVO PAGAMENTO</span>
+          <h2 id="payment-dialog-title">Registrar pagamento</h2>
+          <p>
+            {{ target.share.person.name }} paga para {{ target.debt.paidBy.name }} em “{{
+              target.debt.description
+            }}”.
+          </p>
+        </div>
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Fechar formulário de pagamento"
+          [disabled]="isSavingPayment()"
+          (click)="closePayment()"
+        >
+          ×
+        </button>
+      </header>
+
+      <form [formGroup]="paymentForm" (ngSubmit)="savePayment()" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="payment-amount">Valor</label>
+            <div class="money-input">
+              <span>R$</span>
+              <input
+                id="payment-amount"
+                type="number"
+                min="0.01"
+                [max]="target.share.remainingAmount"
+                step="0.01"
+                inputmode="decimal"
+                formControlName="amount"
+              />
+            </div>
+            <small class="payment-limit">
+              Em aberto: {{ target.share.remainingAmount | currency: 'BRL' }}
+            </small>
+            @if (paymentForm.controls.amount.touched && paymentForm.controls.amount.invalid) {
+              <span class="field-error">Informe um valor válido dentro do saldo em aberto.</span>
+            }
+          </div>
+          <div class="field">
+            <label for="payment-date">Data</label>
+            <input id="payment-date" type="date" formControlName="paymentDate" />
+          </div>
+        </div>
+        <div class="field">
+          <label for="payment-note">Observação <small>(opcional)</small></label>
+          <textarea
+            id="payment-note"
+            rows="3"
+            maxlength="500"
+            placeholder="Ex.: PIX enviado"
+            formControlName="note"
+          ></textarea>
+        </div>
+
+        @if (activityError()) {
+          <div class="operation-error" role="alert">{{ activityError() }}</div>
+        }
+
+        <footer class="modal-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isSavingPayment()"
+            (click)="closePayment()"
+          >
+            Cancelar
+          </button>
+          <button class="primary-button" type="submit" [disabled]="isSavingPayment()">
+            {{ isSavingPayment() ? 'Enviando…' : 'Registrar pagamento' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (isFormOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+    <section
+      class="debt-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="debt-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow">{{ editingDebt() ? 'EDITAR' : 'NOVA' }} DÍVIDA</span>
+          <h2 id="debt-dialog-title">
+            {{ editingDebt() ? 'Atualizar dívida' : 'Dividir uma despesa' }}
+          </h2>
+          <p>O pagador e as pessoas que participam da divisão podem ser diferentes.</p>
+        </div>
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Fechar formulário"
+          [disabled]="isSaving() || isCreatingPerson()"
+          (click)="closeForm()"
+        >
+          ×
+        </button>
+      </header>
+
+      <form [formGroup]="debtForm" (ngSubmit)="saveDebt()" novalidate>
+        <div class="field">
+          <label for="debt-description">Descrição</label>
+          <input
+            id="debt-description"
+            type="text"
+            maxlength="200"
+            placeholder="Ex.: Jantar do grupo"
+            formControlName="description"
+            autofocus
+          />
+          @if (debtForm.controls.description.touched && debtForm.controls.description.invalid) {
+            <span class="field-error">Informe uma descrição com até 200 caracteres.</span>
+          }
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="debt-total">Valor total</label>
+            <div class="money-input" [class.readonly]="editingDebt()">
+              <span>R$</span>
+              <input
+                id="debt-total"
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputmode="decimal"
+                placeholder="0,00"
+                formControlName="totalAmount"
+                [readonly]="editingDebt()"
+              />
+            </div>
+            @if (debtForm.controls.totalAmount.touched && debtForm.controls.totalAmount.invalid) {
+              <span class="field-error">Informe um valor maior ou igual a R$ 0,01.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="debt-category">Categoria</label>
+            <select id="debt-category" formControlName="category">
+              @for (category of categories; track category.value) {
+                <option [value]="category.value">{{ category.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="debt-due-date">Vencimento <small>(opcional)</small></label>
+            <input id="debt-due-date" type="date" formControlName="dueDate" />
+          </div>
+
+          @if (!editingDebt() && groups().length > 0) {
+            <div class="field">
+              <label for="debt-group">Grupo <small>(opcional)</small></label>
+              <select id="debt-group" formControlName="groupId">
+                <option value="">Sem grupo específico</option>
+                @for (group of groups(); track group.id) {
+                  <option [value]="group.id">{{ group.name }}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+
+        @if (editingDebt()) {
+          <div class="locked-split-notice">
+            <span aria-hidden="true">i</span>
+            <p>
+              <strong>Edição protegida</strong>
+              O total permanece fixo. Pessoas com pagamentos não podem ser removidas, suas cotas não
+              podem ficar abaixo do valor pago ou pendente e o pagador não muda após o primeiro
+              pagamento.
+            </p>
+          </div>
+        }
+
+        <section class="people-section" aria-labelledby="payer-title">
+          <div class="section-heading">
+            <div>
+              <h3 id="payer-title">Quem pagou?</h3>
+              <p>Essa pessoa receberá os valores devidos pelos participantes.</p>
+            </div>
+            <button class="text-button" type="button" (click)="togglePersonForm()">
+              {{ isPersonFormOpen() ? 'Fechar cadastro' : '+ Adicionar pessoa' }}
+            </button>
+          </div>
+
+          @if (isPersonFormOpen()) {
+            <div class="quick-person-card" [formGroup]="personForm">
+              <div class="quick-person-grid">
+                <div class="field">
+                  <label for="quick-person-name">Nome</label>
+                  <input
+                    id="quick-person-name"
+                    type="text"
+                    placeholder="Nome da pessoa"
+                    formControlName="name"
+                  />
+                  @if (personForm.controls.name.touched && personForm.controls.name.invalid) {
+                    <span class="field-error">Informe o nome.</span>
+                  }
+                </div>
+                <div class="field">
+                  <label for="quick-person-email">E-mail <small>(opcional)</small></label>
+                  <input
+                    id="quick-person-email"
+                    type="email"
+                    placeholder="pessoa@exemplo.com"
+                    formControlName="email"
+                  />
+                  @if (personForm.controls.email.touched && personForm.controls.email.invalid) {
+                    <span class="field-error">Informe um e-mail válido.</span>
+                  }
+                </div>
+              </div>
+              <div class="quick-person-footer">
+                <label class="current-user-check">
+                  <input type="checkbox" formControlName="isCurrentUser" />
+                  Esta pessoa sou eu
+                </label>
+                <button
+                  class="secondary-button"
+                  type="button"
+                  [disabled]="isCreatingPerson()"
+                  (click)="createPerson()"
+                >
+                  {{ isCreatingPerson() ? 'Cadastrando…' : 'Cadastrar pessoa' }}
+                </button>
+              </div>
+              @if (personError()) {
+                <div class="operation-error" role="alert">{{ personError() }}</div>
+              }
+            </div>
+          }
+
+          @if (people().length > 0) {
+            <div class="field">
+              <label for="debt-payer">Pagador</label>
+              <select id="debt-payer" formControlName="paidByPersonId">
+                @for (person of people(); track person.id) {
+                  <option [value]="person.id">
+                    {{ person.name }}{{ person.isCurrentUser ? ' (você)' : '' }}
+                  </option>
+                }
+              </select>
+            </div>
+          } @else {
+            <div class="people-empty-note">Cadastre o pagador para continuar.</div>
+          }
+        </section>
+
+        <section class="people-section" aria-labelledby="participants-title">
+          <div class="section-heading">
+            <div>
+              <h3 id="participants-title">Quem participa da divisão?</h3>
+              <p>Inclua somente quem deve assumir uma parte, mesmo que não seja o pagador.</p>
+            </div>
+            <button class="text-button" type="button" (click)="splitEqually()">
+              Dividir igualmente
+            </button>
+          </div>
+
+          @if (people().length > 0) {
+            <div class="participant-list">
+              @for (person of people(); track person.id) {
+                <div class="participant-row" [class.selected]="isParticipantSelected(person.id)">
+                  <label class="participant-person">
+                    <input
+                      #participantCheckbox
+                      type="checkbox"
+                      [checked]="isParticipantSelected(person.id)"
+                      (change)="toggleParticipant(person.id, participantCheckbox.checked)"
+                    />
+                    <span class="person-avatar">{{ person.name.slice(0, 2).toUpperCase() }}</span>
+                    <span>
+                      <strong>{{ person.name }}</strong>
+                      <small>{{
+                        person.isCurrentUser ? 'Você' : person.email || 'Participante'
+                      }}</small>
+                    </span>
+                  </label>
+                  @if (isParticipantSelected(person.id)) {
+                    <label class="share-input">
+                      <span>Parte</span>
+                      <span class="compact-money-input">
+                        <small>R$</small>
+                        <input
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          inputmode="decimal"
+                          [attr.aria-label]="'Parte de ' + person.name"
+                          [value]="shareAmount(person.id) ?? ''"
+                          (input)="setShareAmount(person.id, $any($event.target).value)"
+                        />
+                      </span>
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="split-summary" [class.valid]="sharesAreValid()">
+              <span>{{ selectedShareCount() }} participante(s)</span>
+              <span
+                >Distribuído <strong>{{ sharesTotal() | currency: 'BRL' }}</strong></span
+              >
+              <span>
+                {{ remainingToSplit() >= 0 ? 'Falta' : 'Excedeu' }}
+                <strong>{{ absolute(remainingToSplit()) | currency: 'BRL' }}</strong>
+              </span>
+            </div>
+          } @else {
+            <div class="people-empty-note">Cadastre as pessoas que participarão da divisão.</div>
+          }
+        </section>
+
+        @if (operationError()) {
+          <div class="operation-error" role="alert">
+            <span aria-hidden="true">!</span>
+            {{ operationError() }}
+          </div>
+        }
+
+        <footer class="modal-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isSaving()"
+            (click)="closeForm()"
+          >
+            Cancelar
+          </button>
+          <button
+            class="primary-button"
+            type="submit"
+            [disabled]="isSaving() || isCreatingPerson()"
+          >
+            @if (isSaving()) {
+              <span class="button-spinner" aria-hidden="true"></span>
+              Salvando…
+            } @else {
+              {{ editingDebt() ? 'Salvar alterações' : 'Criar dívida' }}
+            }
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (deleteTarget()) {
+  <div class="modal-backdrop confirmation-backdrop" (click)="cancelDelete()">
+    <section
+      class="confirmation-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="delete-debt-title"
+      aria-describedby="delete-debt-description"
+      (click)="$event.stopPropagation()"
+    >
+      <span class="delete-icon" aria-hidden="true">×</span>
+      <h2 id="delete-debt-title">Excluir dívida?</h2>
+      <p id="delete-debt-description">
+        “{{ deleteTarget()?.description }}” e seu histórico serão removidos permanentemente.
+      </p>
+      @if (operationError()) {
+        <div class="operation-error" role="alert">{{ operationError() }}</div>
+      }
+      <footer class="modal-actions confirmation-actions">
+        <button
+          class="secondary-button"
+          type="button"
+          [disabled]="isDeleting()"
+          (click)="cancelDelete()"
+        >
+          Manter dívida
+        </button>
+        <button
+          class="danger-button"
+          type="button"
+          [disabled]="isDeleting()"
+          (click)="confirmDelete()"
+        >
+          {{ isDeleting() ? 'Excluindo…' : 'Excluir permanentemente' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+}

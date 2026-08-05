@@ -1,0 +1,13 @@
+<main class="login-page auth-result-page">
+  <button class="theme-toggle" type="button" (click)="themeService.toggle()" aria-label="Alternar tema">◐</button>
+  <section class="visual-panel"><div class="visual-content"><a class="brand" routerLink="/login"><span class="brand-mark"><span></span><span></span></span><span>Finance <strong>Control</strong></span></a><div class="hero-copy"><span class="eyebrow">Identidade protegida</span><h1>Um passo simples.<br />Uma conta mais segura.</h1><p>Validamos o endereço antes de liberar qualquer dado financeiro.</p></div></div></section>
+  <section class="form-panel"><div class="form-container result-card">
+    @if (state() === 'confirming') {
+      <span class="result-icon"><span class="spinner"></span></span><h2>Confirmando seu e-mail…</h2><p>Aguarde só um instante.</p>
+    } @else if (state() === 'confirmed') {
+      <span class="result-icon success">✓</span><h2>E-mail confirmado!</h2><p>Sua conta está ativa. Agora você já pode entrar no Finance Control.</p><a class="primary-button submit-button" routerLink="/login">Entrar na minha conta</a>
+    } @else {
+      <span class="result-icon error">!</span><h2>Link inválido ou expirado</h2><p>Este link já foi usado, expirou ou está incompleto. Entre no cadastro para solicitar um novo envio.</p><a class="primary-button submit-button" routerLink="/register">Voltar ao cadastro</a>
+    }
+  </div></section>
+</main>

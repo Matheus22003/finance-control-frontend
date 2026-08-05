@@ -1,0 +1,97 @@
+<section class="account-page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">MINHA CONTA</span>
+      <h1>Perfil e preferências</h1>
+      <p>Mantenha sua identidade atualizada em finanças, amizades, grupos e dívidas.</p>
+    </div>
+  </header>
+
+  @if (profile(); as currentProfile) {
+    <div class="account-grid">
+      <article class="settings-card identity-card">
+        <div class="avatar-editor">
+          <span class="profile-avatar">
+            @if (avatarUrl()) { <img [src]="avatarUrl()" alt="Sua foto de perfil" /> }
+            @else { {{ initials() }} }
+          </span>
+          <div>
+            <h2>Foto de perfil</h2>
+            <p>JPEG, PNG ou WebP de até 1 MB.</p>
+            <span class="button-row">
+              <label class="secondary-button" for="avatarFile">{{ isUploadingAvatar() ? 'Enviando…' : 'Escolher foto' }}</label>
+              @if (currentProfile.avatarUrl) { <button class="text-button danger" type="button" (click)="deleteAvatar()" [disabled]="isUploadingAvatar()">Remover</button> }
+            </span>
+            <input id="avatarFile" class="file-input" type="file" accept="image/jpeg,image/png,image/webp" (change)="selectAvatar($event)" [disabled]="isUploadingAvatar()" />
+          </div>
+        </div>
+        @if (avatarMessage()) { <p class="form-message">{{ avatarMessage() }}</p> }
+        <form [formGroup]="profileForm" (ngSubmit)="saveProfile()">
+          <div class="field"><label for="displayName">Nome de exibição</label><input id="displayName" formControlName="displayName" autocomplete="name" /></div>
+          <div class="field"><label>E-mail atual</label><input [value]="currentProfile.email" readonly /></div>
+          <button class="primary-button" type="submit" [disabled]="isSavingProfile()">{{ isSavingProfile() ? 'Salvando…' : 'Salvar perfil' }}</button>
+        </form>
+        @if (profileMessage()) { <p class="form-message">{{ profileMessage() }}</p> }
+      </article>
+
+      <article class="settings-card">
+        <h2>Preferências</h2>
+        <p>As escolhas ficam sincronizadas para o site e para os futuros aplicativos.</p>
+        <form [formGroup]="preferencesForm" (ngSubmit)="savePreferences()">
+          <div class="field"><label for="theme">Tema</label><select id="theme" formControlName="theme"><option value="system">Usar configuração do dispositivo</option><option value="light">Claro</option><option value="dark">Escuro</option></select></div>
+          <label class="switch-row"><span><strong>Resumos por e-mail</strong><small>Receber novidades e resumos financeiros quando esse canal for ativado.</small></span><input type="checkbox" formControlName="emailNotificationsEnabled" /></label>
+          <label class="switch-row"><span><strong>Notificações push</strong><small>Preferência preparada para os aplicativos iOS e Android.</small></span><input type="checkbox" formControlName="pushNotificationsEnabled" /></label>
+          <button class="primary-button" type="submit" [disabled]="isSavingPreferences()">{{ isSavingPreferences() ? 'Salvando…' : 'Salvar preferências' }}</button>
+        </form>
+        @if (preferencesMessage()) { <p class="form-message">{{ preferencesMessage() }}</p> }
+      </article>
+
+      <article class="settings-card">
+        <h2>Alterar e-mail</h2>
+        <p>Enviaremos um link ao endereço novo. Ao confirmar, todas as sessões serão encerradas.</p>
+        <form [formGroup]="emailForm" (ngSubmit)="requestEmailChange()">
+          <div class="field"><label for="newEmail">Novo e-mail</label><input id="newEmail" type="email" formControlName="newEmail" autocomplete="email" /></div>
+          <div class="field"><label for="emailPassword">Senha atual</label><input id="emailPassword" type="password" formControlName="password" autocomplete="current-password" /></div>
+          <button class="primary-button" type="submit" [disabled]="isRequestingEmail()">{{ isRequestingEmail() ? 'Enviando…' : 'Confirmar alteração por e-mail' }}</button>
+        </form>
+        @if (emailMessage()) { <p class="form-message">{{ emailMessage() }}</p> }
+      </article>
+
+      <article class="settings-card export-card">
+        <h2>Exportar meus dados</h2>
+        <p>Baixe um JSON com perfil, finanças, pessoas, dívidas, pagamentos, amizades, grupos, notificações e sessões.</p>
+        <form [formGroup]="exportForm" (ngSubmit)="exportAccount()">
+          <div class="field"><label for="exportPassword">Confirme sua senha</label><input id="exportPassword" type="password" formControlName="password" autocomplete="current-password" /></div>
+          <button class="secondary-button" type="submit" [disabled]="isExporting()">{{ isExporting() ? 'Preparando arquivo…' : 'Baixar meus dados' }}</button>
+        </form>
+        @if (exportMessage()) { <p class="form-message">{{ exportMessage() }}</p> }
+      </article>
+
+      <article class="settings-card danger-zone">
+        <span class="danger-label">ZONA DE PERIGO</span>
+        <h2>Excluir minha conta</h2>
+        <p>Esta ação apaga permanentemente seu perfil e seus dados financeiros privados. Históricos compartilhados já concluídos permanecem anonimizados para as outras pessoas.</p>
+        @if (isCheckingDeletion()) {
+          <p class="eligibility-state">Verificando dívidas e grupos…</p>
+        } @else if (deletionEligibility(); as eligibility) {
+          @if (eligibility.canDelete) {
+            <p class="eligibility-state ready">Sua conta está pronta para exclusão.</p>
+          } @else {
+            <div class="blockers" role="status">
+              <strong>Resolva estas pendências primeiro:</strong>
+              <ul>@for (blocker of eligibility.blockers; track blocker) { <li>{{ blocker }}</li> }</ul>
+            </div>
+          }
+        }
+        <form [formGroup]="deletionForm" (ngSubmit)="deleteAccount()">
+          <div class="field"><label for="deletionPassword">Senha atual</label><input id="deletionPassword" type="password" formControlName="password" autocomplete="current-password" /></div>
+          <div class="field"><label for="deletionConfirmation">Digite EXCLUIR para confirmar</label><input id="deletionConfirmation" formControlName="confirmation" autocomplete="off" /></div>
+          <button class="danger-button" type="submit" [disabled]="isDeleting() || isCheckingDeletion() || !deletionEligibility()?.canDelete">{{ isDeleting() ? 'Excluindo permanentemente…' : 'Excluir conta permanentemente' }}</button>
+        </form>
+        @if (deletionMessage()) { <p class="form-message danger-message">{{ deletionMessage() }}</p> }
+      </article>
+    </div>
+  } @else {
+    <div class="loading-card">Carregando sua conta…</div>
+  }
+</section>

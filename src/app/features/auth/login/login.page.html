@@ -1,0 +1,162 @@
+<main class="login-page">
+  <button
+    class="theme-toggle"
+    type="button"
+    (click)="themeService.toggle()"
+    aria-label="Alternar tema"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M20 15.2A8.4 8.4 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
+    </svg>
+  </button>
+
+  <section class="visual-panel" aria-label="Apresentação do Finance Control">
+    <div class="visual-content">
+      <a class="brand" href="/" aria-label="Finance Control">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span></span>
+        <span>Finance <strong>Control</strong></span>
+      </a>
+
+      <div class="hero-copy">
+        <span class="eyebrow">Sua vida financeira em equilíbrio</span>
+        <h1>Dinheiro organizado.<br />Relações mais leves.</h1>
+        <p>Controle suas finanças e simplifique dívidas compartilhadas em um só lugar.</p>
+      </div>
+
+      <div class="balance-visual" aria-hidden="true">
+        <div class="mini-card balance-card">
+          <small>Saldo do mês</small>
+          <strong>R$ 4.850,00</strong>
+          <span>↑ 12% este mês</span>
+        </div>
+        <div class="mini-card debt-card">
+          <span class="avatar-stack"><i>AS</i><i>BM</i><i>+2</i></span>
+          <small>Pagamentos simplificados</small>
+          <strong>2 em vez de 5</strong>
+        </div>
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+      </div>
+
+      <p class="visual-footer">Finanças pessoais e compartilhadas, sem complicação.</p>
+    </div>
+  </section>
+
+  <section class="form-panel">
+    <div class="mobile-brand">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span></span>
+      <span>Finance <strong>Control</strong></span>
+    </div>
+
+    <div class="form-container">
+      <header>
+        <span class="welcome-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 12h16M14 6l6 6-6 6" /></svg>
+        </span>
+        <h2>Bem-vindo de volta</h2>
+        <p>Entre para acompanhar sua vida financeira.</p>
+      </header>
+
+      @if (errorMessage()) {
+        <div class="error-banner" role="alert">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 8v5m0 3.5v.5M10.3 4.3 2.6 18a2 2 0 0 0 1.75 3h15.3a2 2 0 0 0 1.75-3L13.7 4.3a2 2 0 0 0-3.4 0Z"
+            />
+          </svg>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      @if (successMessage()) {
+        <div class="success-banner" role="status">{{ successMessage() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="field">
+          <label for="email">E-mail</label>
+          <div class="input-with-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 6h18v12H3V6Zm0 1 9 7 9-7" />
+            </svg>
+            <input
+              id="email"
+              type="email"
+              formControlName="email"
+              autocomplete="email"
+              placeholder="voce@exemplo.com"
+            />
+          </div>
+          @if (form.controls.email.touched && form.controls.email.hasError('required')) {
+            <span class="field-error">Informe seu e-mail.</span>
+          } @else if (form.controls.email.touched && form.controls.email.hasError('email')) {
+            <span class="field-error">Informe um e-mail válido.</span>
+          }
+        </div>
+
+        <div class="field">
+          <div class="password-label">
+            <label for="password">Senha</label>
+            <span>Ambiente demonstrativo</span>
+          </div>
+          <div class="input-with-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 10h14v11H5V10Zm3 0V7a4 4 0 0 1 8 0v3" />
+            </svg>
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              autocomplete="current-password"
+              placeholder="Sua senha"
+            />
+            <button
+              type="button"
+              class="password-toggle"
+              (click)="showPassword.set(!showPassword())"
+              [attr.aria-label]="showPassword() ? 'Ocultar senha' : 'Mostrar senha'"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Zm13 0a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0Z"
+                />
+              </svg>
+            </button>
+          </div>
+          @if (form.controls.password.touched && form.controls.password.invalid) {
+            <span class="field-error">Informe sua senha.</span>
+          }
+        </div>
+
+        <a class="forgot-link" routerLink="/forgot-password">Esqueci minha senha</a>
+
+        <button class="primary-button submit-button" type="submit" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="spinner" aria-hidden="true"></span>
+            Entrando…
+          } @else {
+            Entrar
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5" /></svg>
+          }
+        </button>
+      </form>
+
+      <div class="demo-access">
+        <span>Quer apenas conhecer?</span>
+        <button type="button" (click)="useDemoAccount()">Preencher acesso demonstrativo</button>
+      </div>
+
+      <div class="demo-access">
+        <span>Ainda não tem uma conta?</span>
+        <a routerLink="/register">Criar minha conta</a>
+      </div>
+
+      <p class="security-note">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3 5 6v5c0 4.8 2.8 8.2 7 10 4.2-1.8 7-5.2 7-10V6l-7-3Zm-3 9 2 2 4-4" />
+        </svg>
+        Seus dados permanecem protegidos durante o acesso.
+      </p>
+    </div>
+  </section>
+</main>

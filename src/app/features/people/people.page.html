@@ -1,0 +1,69 @@
+<section class="data-page">
+  <header class="page-header">
+    <div>
+      <h1>Pessoas</h1>
+      <p>Gerencie quem participa das suas despesas compartilhadas.</p>
+    </div>
+    <button class="primary-button" type="button" title="Formulário CRUD será a próxima evolução">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      Adicionar pessoa
+    </button>
+  </header>
+
+  <div class="page-toolbar people-toolbar">
+    <span class="people-count">{{ people().length }} pessoa(s) cadastrada(s)</span>
+    <label class="search-field">
+      <span class="sr-only">Buscar pessoa</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+      <input
+        #searchInput
+        type="search"
+        placeholder="Buscar por nome ou e-mail"
+        (input)="search.set(searchInput.value)"
+      />
+    </label>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state surface-card">Carregando pessoas…</div>
+  } @else if (hasError()) {
+    <div class="empty-state surface-card">
+      <span class="empty-state-icon">!</span>
+      <h3>Não foi possível carregar</h3>
+      <p>Verifique a conexão com o BFF e tente novamente.</p>
+      <button class="secondary-button" type="button" (click)="loadPeople()">
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (filteredPeople().length === 0) {
+    <div class="empty-state surface-card">
+      <span class="empty-state-icon">P</span>
+      <h3>Nenhuma pessoa encontrada</h3>
+      <p>Adicione amigos, familiares ou colegas para começar a dividir despesas.</p>
+    </div>
+  } @else {
+    <div class="people-grid">
+      @for (person of filteredPeople(); track person.id) {
+        <article class="person-card surface-card">
+          <div class="person-header">
+            <span class="person-avatar">{{ person.name.slice(0, 2).toUpperCase() }}</span>
+            @if (person.isCurrentUser) {
+              <span class="current-user-badge">Você</span>
+            }
+          </div>
+          <div class="person-copy">
+            <h2>{{ person.name }}</h2>
+            <p>{{ person.email ?? 'E-mail não informado' }}</p>
+          </div>
+          <div class="person-balance">
+            <span>Saldo compartilhado</span><strong>Tudo certo</strong>
+          </div>
+          <button class="secondary-button" type="button">Ver detalhes</button>
+        </article>
+      }
+    </div>
+  }
+</section>

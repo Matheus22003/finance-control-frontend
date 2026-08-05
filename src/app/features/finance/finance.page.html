@@ -1,0 +1,539 @@
+<section class="data-page">
+  <header class="page-header">
+    <div>
+      <h1>Finanças</h1>
+      <p>Acompanhe receitas e despesas em um único lugar.</p>
+    </div>
+    <button class="primary-button" type="button" (click)="openNewTransaction()">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      Novo lançamento
+    </button>
+  </header>
+
+  @if (successMessage()) {
+    <div class="success-toast" role="status">
+      <span aria-hidden="true">✓</span>
+      {{ successMessage() }}
+      <button type="button" aria-label="Fechar aviso" (click)="successMessage.set(null)">×</button>
+    </div>
+  }
+
+  <div class="metric-grid">
+    <article class="metric-card surface-card positive">
+      <span>Receitas</span><strong>{{ totalIncome() | currency: 'BRL' }}</strong>
+    </article>
+    <article class="metric-card surface-card negative">
+      <span>Despesas</span><strong>{{ totalExpenses() | currency: 'BRL' }}</strong>
+    </article>
+    <article class="metric-card surface-card">
+      <span>Saldo</span><strong>{{ balance() | currency: 'BRL' }}</strong>
+    </article>
+  </div>
+
+  <article class="budget-panel surface-card">
+    <header class="section-heading">
+      <div>
+        <span class="section-eyebrow">ORÇAMENTO DO MÊS</span>
+        <h2>Planejado x realizado</h2>
+        <p>Defina limites por categoria e acompanhe o consumo no mês selecionado.</p>
+      </div>
+      <div class="budget-summary">
+        <span>Planejado <strong>{{ totalBudgetPlanned() | currency: 'BRL' }}</strong></span>
+        <span>Gasto <strong>{{ totalBudgetSpent() | currency: 'BRL' }}</strong></span>
+        <span [class.negative-value]="totalBudgetRemaining() < 0">
+          Restante <strong>{{ totalBudgetRemaining() | currency: 'BRL' }}</strong>
+        </span>
+      </div>
+    </header>
+    <div class="budget-grid">
+      @for (category of budgets(); track category.category) {
+        <button class="budget-category" type="button" (click)="openBudget(category)">
+          <span class="budget-category-header">
+            <strong>{{ categoryLabel(category.category) }}</strong>
+            <small>{{ category.spent | currency: 'BRL' }} / {{ category.planned | currency: 'BRL' }}</small>
+          </span>
+          <span class="progress-track" aria-hidden="true">
+            <span
+              [class.over-budget]="category.usagePercentage > 100"
+              [style.width.%]="budgetProgress(category)"
+            ></span>
+          </span>
+          <small>
+            @if (category.planned > 0) {
+              {{ category.usagePercentage | number: '1.0-0' }}% utilizado
+            } @else {
+              Definir limite
+            }
+          </small>
+        </button>
+      }
+    </div>
+  </article>
+
+  @if (recurringTransactions().length > 0) {
+    <article class="recurring-panel surface-card">
+      <header class="section-heading compact">
+        <div>
+          <span class="section-eyebrow">AUTOMAÇÃO</span>
+          <h2>Lançamentos recorrentes</h2>
+        </div>
+        <span>{{ recurringTransactions().length }} regra(s)</span>
+      </header>
+      <div class="recurring-list">
+        @for (recurring of recurringTransactions(); track recurring.id) {
+          <div class="recurring-row">
+            <span class="recurring-icon" [class.expense]="recurring.kind === 'EXPENSE'">↻</span>
+            <span class="description">
+              <strong>{{ recurring.description }}</strong>
+              <small>
+                {{ frequencyLabel(recurring.frequency) }} · próxima em
+                {{ recurring.nextOccurrenceDate | date: 'dd/MM/yyyy' }}
+              </small>
+            </span>
+            <strong class="recurring-amount">{{ recurring.amount | currency: 'BRL' }}</strong>
+            <span class="recurring-status" [class.paused]="!recurring.active">
+              {{ recurring.active ? 'Ativa' : 'Pausada' }}
+            </span>
+            <span class="row-actions">
+              <button
+                class="row-action"
+                type="button"
+                [disabled]="recurringBusyId() === recurring.id"
+                [attr.aria-label]="recurring.active ? 'Pausar recorrência' : 'Reativar recorrência'"
+                (click)="toggleRecurring(recurring)"
+              >
+                {{ recurring.active ? 'Ⅱ' : '▶' }}
+              </button>
+              <button
+                class="row-action danger"
+                type="button"
+                [disabled]="recurringBusyId() === recurring.id"
+                aria-label="Excluir regra recorrente"
+                (click)="deleteRecurring(recurring)"
+              >
+                ×
+              </button>
+            </span>
+          </div>
+        }
+      </div>
+    </article>
+  }
+
+  <div class="page-toolbar">
+    <div class="segmented-control" aria-label="Filtrar lançamentos">
+      <button type="button" [class.active]="filter() === 'all'" (click)="filter.set('all')">
+        Todos
+      </button>
+      <button type="button" [class.active]="filter() === 'income'" (click)="filter.set('income')">
+        Receitas
+      </button>
+      <button type="button" [class.active]="filter() === 'expense'" (click)="filter.set('expense')">
+        Despesas
+      </button>
+    </div>
+    <div class="period-filters">
+      <label>
+        <span>Mês</span>
+        <input
+          #monthInput
+          type="month"
+          [value]="selectedMonth()"
+          (change)="changeMonth(monthInput.value)"
+        />
+      </label>
+      <label>
+        <span>Categoria</span>
+        <select
+          #categoryFilter
+          [value]="selectedCategory()"
+          (change)="changeCategory(categoryFilter.value)"
+        >
+          <option value="ALL">Todas</option>
+          @for (category of categories; track category.value) {
+            <option [value]="category.value">{{ category.label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+    <label class="search-field">
+      <span class="sr-only">Buscar lançamento</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="11" cy="11" r="7" />
+        <path d="m20 20-4-4" />
+      </svg>
+      <input
+        #searchInput
+        type="search"
+        placeholder="Buscar lançamento"
+        (input)="search.set(searchInput.value)"
+      />
+    </label>
+  </div>
+
+  <article class="content-card surface-card">
+    <header class="content-card-header">
+      <h2>Lançamentos</h2>
+      <span>{{ transactions().length }} registro(s)</span>
+    </header>
+    @if (isLoading()) {
+      <div class="loading-state">Carregando lançamentos…</div>
+    } @else if (hasError()) {
+      <div class="empty-state">
+        <span class="empty-state-icon">!</span>
+        <h3>Não foi possível carregar</h3>
+        <p>Verifique a conexão com o BFF e tente novamente.</p>
+        <button class="secondary-button" type="button" (click)="loadTransactions()">
+          Tentar novamente
+        </button>
+      </div>
+    } @else if (transactions().length === 0) {
+      <div class="empty-state">
+        <span class="empty-state-icon">↗</span>
+        <h3>Nenhum lançamento encontrado</h3>
+        <p>Suas receitas e despesas aparecerão aqui assim que forem registradas.</p>
+        <button class="secondary-button" type="button" (click)="openNewTransaction()">
+          Criar primeiro lançamento
+        </button>
+      </div>
+    } @else {
+      <div class="transaction-table">
+        @for (transaction of transactions(); track transaction.kind + transaction.id) {
+          <div class="transaction-row">
+            <span class="type-icon" [class.expense]="transaction.kind === 'expense'">{{
+              transaction.kind === 'income' ? 'R' : 'D'
+            }}</span>
+            <span class="description"
+              ><strong>{{ transaction.description }}</strong
+              ><small>{{
+                transaction.kind === 'income' ? 'Receita' : categoryLabel(transaction.category)
+              }} @if (transaction.recurringTransactionId) { · Recorrente }</small></span
+            >
+            <span class="date">{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</span>
+            <strong class="amount" [class.expense]="transaction.kind === 'expense'"
+              >{{ transaction.kind === 'income' ? '+' : '−' }}
+              {{ transaction.amount | currency: 'BRL' }}</strong
+            >
+            <span class="row-actions">
+              <button
+                class="row-action"
+                type="button"
+                title="Editar lançamento"
+                [attr.aria-label]="'Editar ' + transaction.description"
+                (click)="openEditTransaction(transaction)"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m4 20 4.4-1 9.8-9.8-3.4-3.4L5 15.6 4 20Z" />
+                  <path d="m13.8 6.8 3.4 3.4" />
+                </svg>
+              </button>
+              <button
+                class="row-action danger"
+                type="button"
+                title="Excluir lançamento"
+                [attr.aria-label]="'Excluir ' + transaction.description"
+                (click)="requestDelete(transaction)"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h16M9 7V4h6v3m3 0-1 13H7L6 7m4 4v5m4-5v5" />
+                </svg>
+              </button>
+            </span>
+          </div>
+        }
+      </div>
+    }
+  </article>
+</section>
+
+@if (isFormOpen()) {
+  <div class="modal-backdrop" (click)="closeForm()">
+    <section
+      class="transaction-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="transaction-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow"
+            >{{ editingTransaction() ? 'EDITAR' : 'NOVO' }} LANÇAMENTO</span
+          >
+          <h2 id="transaction-dialog-title">
+            {{ editingTransaction() ? 'Atualizar lançamento' : 'Adicionar lançamento' }}
+          </h2>
+          <p>Registre uma receita ou despesa para manter seu saldo atualizado.</p>
+        </div>
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Fechar formulário"
+          [disabled]="isSaving()"
+          (click)="closeForm()"
+        >
+          ×
+        </button>
+      </header>
+
+      <form [formGroup]="transactionForm" (ngSubmit)="saveTransaction()" novalidate>
+        @if (editingTransaction()) {
+          <div class="editing-kind">
+            <span>Tipo</span>
+            <strong>{{ editingTransaction()?.kind === 'income' ? 'Receita' : 'Despesa' }}</strong>
+          </div>
+        } @else {
+          <div class="kind-selector" aria-label="Tipo de lançamento">
+            <button
+              type="button"
+              [class.active]="transactionForm.controls.kind.value === 'income'"
+              (click)="transactionForm.controls.kind.setValue('income')"
+            >
+              <span class="kind-icon income">↑</span>
+              <span><strong>Receita</strong><small>Dinheiro que entrou</small></span>
+            </button>
+            <button
+              type="button"
+              [class.active]="transactionForm.controls.kind.value === 'expense'"
+              (click)="transactionForm.controls.kind.setValue('expense')"
+            >
+              <span class="kind-icon expense">↓</span>
+              <span><strong>Despesa</strong><small>Dinheiro que saiu</small></span>
+            </button>
+          </div>
+        }
+
+        <div class="field">
+          <label for="transaction-description">Descrição</label>
+          <input
+            id="transaction-description"
+            type="text"
+            maxlength="200"
+            placeholder="Ex.: Mercado do mês"
+            formControlName="description"
+            autofocus
+          />
+          @if (
+            transactionForm.controls.description.touched &&
+            transactionForm.controls.description.invalid
+          ) {
+            <span class="field-error">Informe uma descrição com até 200 caracteres.</span>
+          }
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="transaction-amount">Valor</label>
+            <div class="money-input">
+              <span>R$</span>
+              <input
+                id="transaction-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                inputmode="decimal"
+                placeholder="0,00"
+                formControlName="amount"
+              />
+            </div>
+            @if (
+              transactionForm.controls.amount.touched && transactionForm.controls.amount.invalid
+            ) {
+              <span class="field-error">Informe um valor maior ou igual a R$ 0,01.</span>
+            }
+          </div>
+
+          <div class="field">
+            <label for="transaction-date">Data</label>
+            <input id="transaction-date" type="date" formControlName="transactionDate" />
+            @if (
+              transactionForm.controls.transactionDate.touched &&
+              transactionForm.controls.transactionDate.invalid
+            ) {
+              <span class="field-error">Informe a data do lançamento.</span>
+            }
+          </div>
+        </div>
+
+        @if (transactionForm.controls.kind.value === 'expense') {
+          <div class="field">
+            <label for="transaction-category">Categoria</label>
+            <select id="transaction-category" formControlName="category">
+              @for (category of categories; track category.value) {
+                <option [value]="category.value">{{ category.label }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (!editingTransaction()) {
+          <div class="recurrence-fields">
+            <label class="switch-field">
+              <input type="checkbox" formControlName="recurring" />
+              <span aria-hidden="true"></span>
+              <span>
+                <strong>Repetir este lançamento</strong>
+                <small>As ocorrências serão criadas automaticamente.</small>
+              </span>
+            </label>
+            @if (transactionForm.controls.recurring.value) {
+              <div class="form-grid">
+                <div class="field">
+                  <label for="transaction-frequency">Frequência</label>
+                  <select id="transaction-frequency" formControlName="frequency">
+                    <option value="WEEKLY">Semanal</option>
+                    <option value="MONTHLY">Mensal</option>
+                    <option value="YEARLY">Anual</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label for="transaction-end-date">Termina em (opcional)</label>
+                  <input
+                    id="transaction-end-date"
+                    type="date"
+                    [min]="transactionForm.controls.transactionDate.value"
+                    formControlName="endDate"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (operationError()) {
+          <div class="operation-error" role="alert">
+            <span aria-hidden="true">!</span>
+            {{ operationError() }}
+          </div>
+        }
+
+        <footer class="modal-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isSaving()"
+            (click)="closeForm()"
+          >
+            Cancelar
+          </button>
+          <button class="primary-button" type="submit" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <span class="button-spinner" aria-hidden="true"></span>
+              Salvando…
+            } @else {
+              {{ editingTransaction() ? 'Salvar alterações' : 'Adicionar lançamento' }}
+            }
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (budgetEditing()) {
+  <div class="modal-backdrop" (click)="closeBudget()">
+    <section
+      class="budget-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="budget-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow">ORÇAMENTO {{ selectedMonth() }}</span>
+          <h2 id="budget-dialog-title">{{ categoryLabel(budgetEditing()?.category) }}</h2>
+          <p>Informe quanto pretende gastar nessa categoria durante o mês.</p>
+        </div>
+        <button class="modal-close" type="button" [disabled]="isBudgetSaving()" (click)="closeBudget()">
+          ×
+        </button>
+      </header>
+      <form [formGroup]="budgetForm" (ngSubmit)="saveBudget()" novalidate>
+        <div class="field">
+          <label for="budget-amount">Limite mensal</label>
+          <div class="money-input">
+            <span>R$</span>
+            <input
+              id="budget-amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              inputmode="decimal"
+              placeholder="0,00"
+              formControlName="amount"
+              autofocus
+            />
+          </div>
+          @if (budgetForm.controls.amount.touched && budgetForm.controls.amount.invalid) {
+            <span class="field-error">Informe um limite maior ou igual a R$ 0,01.</span>
+          }
+        </div>
+        @if (operationError()) {
+          <div class="operation-error" role="alert">{{ operationError() }}</div>
+        }
+        <footer class="modal-actions budget-actions">
+          @if ((budgetEditing()?.planned ?? 0) > 0) {
+            <button
+              class="danger-link"
+              type="button"
+              [disabled]="isBudgetSaving()"
+              (click)="removeBudget()"
+            >
+              Remover limite
+            </button>
+          }
+          <button class="secondary-button" type="button" [disabled]="isBudgetSaving()" (click)="closeBudget()">
+            Cancelar
+          </button>
+          <button class="primary-button" type="submit" [disabled]="isBudgetSaving()">
+            {{ isBudgetSaving() ? 'Salvando…' : 'Salvar orçamento' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (deleteTarget()) {
+  <div class="modal-backdrop confirmation-backdrop" (click)="cancelDelete()">
+    <section
+      class="confirmation-modal"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="delete-dialog-title"
+      aria-describedby="delete-dialog-description"
+      (click)="$event.stopPropagation()"
+    >
+      <span class="delete-icon" aria-hidden="true">×</span>
+      <h2 id="delete-dialog-title">Excluir lançamento?</h2>
+      <p id="delete-dialog-description">
+        “{{ deleteTarget()?.description }}” será removido permanentemente e o saldo será
+        recalculado.
+      </p>
+
+      @if (operationError()) {
+        <div class="operation-error" role="alert">{{ operationError() }}</div>
+      }
+
+      <footer class="modal-actions confirmation-actions">
+        <button
+          class="secondary-button"
+          type="button"
+          [disabled]="isDeleting()"
+          (click)="cancelDelete()"
+        >
+          Manter lançamento
+        </button>
+        <button
+          class="danger-button"
+          type="button"
+          [disabled]="isDeleting()"
+          (click)="confirmDelete()"
+        >
+          {{ isDeleting() ? 'Excluindo…' : 'Excluir permanentemente' }}
+        </button>
+      </footer>
+    </section>
+  </div>
+}

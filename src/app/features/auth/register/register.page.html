@@ -1,0 +1,38 @@
+<main class="login-page">
+  <button class="theme-toggle" type="button" (click)="themeService.toggle()" aria-label="Alternar tema">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 15.2A8.4 8.4 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" /></svg>
+  </button>
+  <section class="visual-panel" aria-label="Finance Control">
+    <div class="visual-content">
+      <a class="brand" routerLink="/login"><span class="brand-mark"><span></span><span></span></span><span>Finance <strong>Control</strong></span></a>
+      <div class="hero-copy"><span class="eyebrow">Comece com segurança</span><h1>Sua vida financeira.<br />Sob seu controle.</h1><p>Organize finanças e compartilhe despesas apenas com pessoas em quem você confia.</p></div>
+      <p class="visual-footer">Uma conta, todos os seus dispositivos.</p>
+    </div>
+  </section>
+  <section class="form-panel">
+    <div class="mobile-brand"><span class="brand-mark"><span></span><span></span></span><span>Finance <strong>Control</strong></span></div>
+    <div class="form-container">
+      @if (registeredEmail()) {
+        <header><span class="welcome-icon">✓</span><h2>Confirme seu e-mail</h2><p>Enviamos um link para <strong>{{ registeredEmail() }}</strong>. Abra a mensagem para ativar sua conta.</p></header>
+        @if (infoMessage()) { <div class="success-banner" role="status">{{ infoMessage() }}</div> }
+        @if (errorMessage()) { <div class="error-banner" role="alert"><span>{{ errorMessage() }}</span></div> }
+        <div class="confirmation-actions">
+          <a class="primary-button submit-button" routerLink="/login">Ir para o login</a>
+          <button class="secondary-button" type="button" (click)="resendConfirmation()" [disabled]="isResending()">{{ isResending() ? 'Reenviando…' : 'Reenviar e-mail' }}</button>
+        </div>
+        <p class="security-note">No ambiente local, abra o Mailpit em <strong>localhost:8025</strong>.</p>
+      } @else {
+        <header><h2>Crie sua conta</h2><p>É rápido, seguro e funciona em todos os seus dispositivos.</p></header>
+        @if (errorMessage()) { <div class="error-banner" role="alert"><span>{{ errorMessage() }}</span></div> }
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <div class="field"><label for="displayName">Nome</label><div class="input-with-icon"><input id="displayName" formControlName="displayName" autocomplete="name" placeholder="Como quer ser chamado" /></div>@if (form.controls.displayName.touched && form.controls.displayName.invalid) { <span class="field-error">Informe seu nome.</span> }</div>
+          <div class="field"><label for="email">E-mail</label><div class="input-with-icon"><input id="email" type="email" formControlName="email" autocomplete="email" placeholder="voce@exemplo.com" /></div>@if (form.controls.email.touched && form.controls.email.invalid) { <span class="field-error">Informe um e-mail válido.</span> }</div>
+          <div class="field"><label for="password">Senha</label><div class="input-with-icon"><input id="password" type="password" formControlName="password" autocomplete="new-password" placeholder="Mínimo de 8 caracteres" /></div><span class="field-hint">Use maiúscula, minúscula, número e símbolo.</span></div>
+          <div class="field"><label for="passwordConfirmation">Confirme a senha</label><div class="input-with-icon"><input id="passwordConfirmation" type="password" formControlName="passwordConfirmation" autocomplete="new-password" /></div></div>
+          <button class="primary-button submit-button" type="submit" [disabled]="isSubmitting()">{{ isSubmitting() ? 'Criando…' : 'Criar conta' }}</button>
+        </form>
+        <div class="demo-access"><span>Já tem uma conta?</span><a routerLink="/login">Entrar</a></div>
+      }
+    </div>
+  </section>
+</main>

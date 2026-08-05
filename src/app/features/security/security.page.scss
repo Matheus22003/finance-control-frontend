@@ -1,0 +1,32 @@
+.security-page { max-width: 980px; margin: 0 auto; padding: 20px 24px 100px; color: var(--text-primary); }
+header { margin-bottom: 28px; }
+.eyebrow { color: var(--action-primary); font-size: .75rem; font-weight: 800; letter-spacing: .14em; }
+h1 { margin: 7px 0; font-size: clamp(1.7rem, 4vw, 2.4rem); }
+header p, .session-card p, .session-card small { color: var(--text-secondary); }
+.session-list { display: grid; gap: 12px; }
+.password-card { padding: 24px; margin-bottom: 34px; border: 1px solid var(--border-subtle); border-radius: 18px; background: var(--background-elevated); }
+.password-copy { margin-bottom: 20px; }
+.password-copy h2, .sessions-heading h2 { margin: 0 0 6px; font-size: 1.1rem; }
+.password-copy p, .sessions-heading p { margin: 0; color: var(--text-secondary); }
+.password-card form { display: grid; grid-template-columns: repeat(3, 1fr) auto; gap: 14px; align-items: end; }
+.field { display: grid; gap: 7px; }
+.field label { font-size: .8rem; font-weight: 700; }
+.field input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--background-primary); color: var(--text-primary); }
+.field small { color: var(--text-secondary); font-size: .68rem; }
+.primary-action { min-height: 44px; border: 0; background: var(--action-primary); color: #fff; font-weight: 750; }
+.sessions-heading { margin-bottom: 16px; }
+.session-card { display: grid; grid-template-columns: 48px 1fr auto; gap: 16px; align-items: center; padding: 20px; border: 1px solid var(--border-subtle); border-radius: 18px; background: var(--background-elevated); }
+.session-card.current { border-color: var(--action-primary); }
+.device-icon { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: var(--background-subtle); color: var(--action-primary); }
+.device-icon svg { width: 24px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+h2 { margin: 0 0 5px; font-size: 1rem; }
+p { margin: 0 0 5px; }
+.session-actions { display: grid; justify-items: end; gap: 10px; }
+.session-actions span { color: var(--action-primary); font-size: .76rem; font-weight: 800; }
+button { border: 1px solid var(--border-subtle); border-radius: 10px; padding: 9px 13px; background: transparent; color: var(--text-primary); cursor: pointer; }
+button:hover { border-color: var(--action-primary); color: var(--action-primary); }
+button:disabled { opacity: .55; cursor: wait; }
+.message { padding: 18px; border-radius: 12px; background: var(--background-elevated); color: var(--text-secondary); }
+.message.error { margin-bottom: 16px; color: #d64545; }
+@media (max-width: 900px) { .password-card form { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 650px) { .security-page { padding-inline: 16px; } .password-card { padding: 18px; } .password-card form { grid-template-columns: 1fr; } .session-card { grid-template-columns: 42px 1fr; } .session-actions { grid-column: 2; justify-items: start; } }

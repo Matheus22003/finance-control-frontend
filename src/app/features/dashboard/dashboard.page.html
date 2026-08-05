@@ -1,0 +1,636 @@
+<section class="dashboard-page">
+  <header class="page-header dashboard-header">
+    <div>
+      <span class="eyebrow">Visão geral</span>
+      <h1>Olá, {{ data()?.currentUser?.displayName ?? 'bem-vindo' }}</h1>
+      <p>Aqui está o resumo da sua vida financeira.</p>
+    </div>
+    <div class="header-actions">
+      <button class="month-selector" type="button" aria-label="Selecionar mês">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 4v3m14-3v3M4 9h16M4 6h16v14H4V6Z" />
+        </svg>
+        <span>{{ referenceMonth }}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m8 10 4 4 4-4" /></svg>
+      </button>
+      <a class="primary-button" routerLink="/finance">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        Adicionar lançamento
+      </a>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="summary-grid" aria-label="Carregando resumo">
+      @for (item of [1, 2, 3, 4, 5]; track item) {
+        <div class="summary-card skeleton-card"><span></span><strong></strong><small></small></div>
+      }
+    </div>
+    <div class="dashboard-grid loading-grid">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="error-state surface-card" role="alert">
+      <span class="error-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 8v5m0 3.5v.5M10.3 4.3 2.6 18a2 2 0 0 0 1.75 3h15.3a2 2 0 0 0 1.75-3L13.7 4.3a2 2 0 0 0-3.4 0Z"
+          />
+        </svg>
+      </span>
+      <div>
+        <h2>Resumo indisponível</h2>
+        <p>{{ errorMessage() }}</p>
+      </div>
+      <button class="secondary-button" type="button" (click)="loadDashboard()">
+        Tentar novamente
+      </button>
+    </div>
+  } @else if (data(); as dashboard) {
+    <div class="summary-grid">
+      <article class="summary-card featured-card">
+        <div class="card-label"><span>Saldo do mês</span><i class="status-dot"></i></div>
+        <strong>{{ dashboard.summary.balance | currency: 'BRL' }}</strong>
+        <small [class.negative]="dashboard.summary.balance < 0">
+          {{ balanceTrend() | percent: '1.0-0' }} das receitas disponível
+        </small>
+        <span class="featured-orbit"></span>
+      </article>
+
+      <article class="summary-card">
+        <div class="card-label">
+          <span class="summary-icon positive"
+            ><svg viewBox="0 0 24 24"><path d="m7 14 5-5 5 5M12 9v10" /></svg
+          ></span>
+          <span>Receitas</span>
+        </div>
+        <strong>{{ dashboard.summary.totalIncome | currency: 'BRL' }}</strong>
+        <small>Entradas no período</small>
+      </article>
+
+      <article class="summary-card">
+        <div class="card-label">
+          <span class="summary-icon negative"
+            ><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5M12 5v10" /></svg
+          ></span>
+          <span>Despesas</span>
+        </div>
+        <strong>{{ dashboard.summary.totalExpenses | currency: 'BRL' }}</strong>
+        <small>Saídas no período</small>
+      </article>
+
+      <article class="summary-card debt-receive">
+        <div class="card-label"><span>A receber</span><span class="pill positive">+</span></div>
+        <strong>{{ dashboard.summary.debtsSummary.totalToReceive | currency: 'BRL' }}</strong>
+        <small>De dívidas compartilhadas</small>
+      </article>
+
+      <article class="summary-card debt-pay">
+        <div class="card-label"><span>A pagar</span><span class="pill negative">−</span></div>
+        <strong>{{ dashboard.summary.debtsSummary.totalOwed | currency: 'BRL' }}</strong>
+        <small>{{ dashboard.summary.debtsSummary.openDebtsCount }} dívida(s) em aberto</small>
+      </article>
+    </div>
+
+    <section class="ai-analysis surface-card" aria-labelledby="ai-analysis-title">
+      <header class="ai-analysis-header">
+        <div class="ai-heading">
+          <span class="ai-mark" aria-hidden="true">✦</span>
+          <div>
+            <span class="section-eyebrow">Análise inteligente</span>
+            <h2 id="ai-analysis-title">Raio-X da sua vida financeira</h2>
+            <p>Entenda o mês e descubra de onde vêm os valores das suas dívidas.</p>
+          </div>
+        </div>
+        <button
+          class="primary-button ai-action"
+          type="button"
+          [disabled]="isAnalyzing()"
+          (click)="analyzeFinancialLife()"
+        >
+          {{ isAnalyzing() ? 'Analisando…' : aiAnalysis() ? 'Atualizar análise' : 'Gerar análise' }}
+        </button>
+      </header>
+
+      @if (aiError()) {
+        <div class="ai-feedback" role="alert">{{ aiError() }}</div>
+      }
+
+      @if (isAnalyzing() && !aiAnalysis()) {
+        <div class="ai-loading" aria-label="Gerando análise">
+          <span></span><span></span><span></span>
+        </div>
+      } @else if (aiAnalysis(); as analysis) {
+        <p class="ai-overview">{{ analysis.overview }}</p>
+        <div class="ai-columns">
+          <article>
+            <span class="ai-column-label">Seu mês</span>
+            @for (insight of analysis.financeInsights; track insight.title) {
+              <div class="ai-insight" [class]="'ai-insight ' + insight.severity.toLowerCase()">
+                <i aria-hidden="true"></i>
+                <span><strong>{{ insight.title }}</strong><small>{{ insight.description }}</small></span>
+              </div>
+            }
+          </article>
+          <article>
+            <span class="ai-column-label">Suas dívidas</span>
+            @for (insight of analysis.debtInsights; track insight.title) {
+              <div class="ai-insight" [class]="'ai-insight ' + insight.severity.toLowerCase()">
+                <i aria-hidden="true"></i>
+                <span><strong>{{ insight.title }}</strong><small>{{ insight.description }}</small></span>
+              </div>
+            }
+          </article>
+          <article class="ai-recommendations">
+            <span class="ai-column-label">Próximos passos</span>
+            <ol>
+              @for (recommendation of analysis.recommendations; track recommendation) {
+                <li>{{ recommendation }}</li>
+              }
+            </ol>
+          </article>
+        </div>
+        <footer class="ai-disclaimer">
+          <span>✦ Análise {{ analysis.provider === 'mock' ? 'demonstrativa' : 'por IA' }}</span>
+          <small>Dados pessoais e descrições não são enviados ao provedor.</small>
+        </footer>
+      } @else {
+        <div class="ai-empty">
+          <span aria-hidden="true">◎</span>
+          <p>A análise cruza seu fluxo mensal, categorias, dívidas, vencimentos e pagamentos simplificados.</p>
+        </div>
+      }
+
+      <section class="ai-questions" aria-labelledby="ai-questions-title">
+        <header>
+          <div>
+            <span class="ai-column-label">Pergunte aos seus dados</span>
+            <h3 id="ai-questions-title">O que você quer entender?</h3>
+            <p>Faça perguntas simples sobre gastos, pessoas e valores das suas dívidas.</p>
+          </div>
+          <span class="privacy-chip">Nomes protegidos</span>
+        </header>
+
+        @if (aiConversation().length > 0) {
+          <div class="ai-conversation" aria-live="polite">
+            @for (message of aiConversation(); track $index) {
+              <div class="ai-message" [class.user]="message.role === 'user'">
+                <span aria-hidden="true">{{ message.role === 'user' ? 'Você' : '✦' }}</span>
+                <p>{{ message.text }}</p>
+              </div>
+            }
+            @if (isAskingAi()) {
+              <div class="ai-message thinking">
+                <span aria-hidden="true">✦</span>
+                <p>Consultando seus dados<span>…</span></p>
+              </div>
+            }
+          </div>
+        }
+
+        @if (aiQuestionError()) {
+          <div class="ai-feedback" role="alert">{{ aiQuestionError() }}</div>
+        }
+
+        <div class="question-suggestions" aria-label="Sugestões de perguntas">
+          @for (question of suggestedQuestions(); track question) {
+            <button
+              type="button"
+              [disabled]="isAskingAi()"
+              (click)="askSuggestedQuestion(question)"
+            >
+              {{ question }}
+            </button>
+          }
+        </div>
+
+        <form class="ai-question-form" (submit)="submitAiQuestion($event)">
+          <label class="sr-only" for="ai-financial-question">Pergunta sobre suas finanças</label>
+          <input
+            id="ai-financial-question"
+            type="text"
+            maxlength="500"
+            autocomplete="off"
+            placeholder="Ex.: quem ainda me deve pela comida?"
+            [value]="aiQuestion()"
+            [disabled]="isAskingAi()"
+            (input)="updateAiQuestion($event)"
+          />
+          <button
+            class="primary-button"
+            type="submit"
+            [disabled]="aiQuestion().trim().length < 3 || isAskingAi()"
+          >
+            {{ isAskingAi() ? 'Respondendo…' : 'Perguntar' }}
+          </button>
+        </form>
+        <small class="question-disclaimer">
+          O chat não é salvo. Quando necessário, o Groq recebe aliases e valores; nomes reais permanecem no BFF.
+        </small>
+      </section>
+    </section>
+
+    <section class="debt-center" aria-labelledby="debt-center-title">
+      <article class="surface-card pending-card">
+        <header class="card-header">
+          <div>
+            <span class="section-eyebrow">Ações necessárias</span>
+            <h2 id="debt-center-title">Aguardando sua confirmação</h2>
+            <p>Revise pagamentos registrados pela outra pessoa.</p>
+          </div>
+          @if (
+            dashboard.pendingConfirmations.length + dashboard.pendingSettlementConfirmations.length >
+            0
+          ) {
+            <span class="pending-count">{{
+              dashboard.pendingConfirmations.length +
+                dashboard.pendingSettlementConfirmations.length
+            }}</span>
+          }
+        </header>
+
+        @if (actionMessage()) {
+          <div class="action-feedback success" role="status">{{ actionMessage() }}</div>
+        }
+        @if (actionError()) {
+          <div class="action-feedback error" role="alert">{{ actionError() }}</div>
+        }
+
+        @if (
+          dashboard.pendingConfirmations.length > 0 ||
+          dashboard.pendingSettlementConfirmations.length > 0
+        ) {
+          <div class="pending-list">
+            @for (payment of dashboard.pendingConfirmations.slice(0, 4); track payment.id) {
+              <article class="pending-item">
+                <span class="pending-avatar">{{
+                  payment.fromPerson.name.slice(0, 2).toUpperCase()
+                }}</span>
+                <span class="pending-copy">
+                  <strong>{{ payment.fromPerson.name }}</strong>
+                  <small>
+                    {{ debtDescription(payment) }} · {{ payment.paymentDate | date: 'dd/MM/yyyy' }}
+                  </small>
+                  @if (payment.note) {
+                    <small class="payment-note">“{{ payment.note }}”</small>
+                  }
+                </span>
+                <strong class="pending-amount">{{ payment.amount | currency: 'BRL' }}</strong>
+                <span class="pending-actions">
+                  <button
+                    class="secondary-button"
+                    type="button"
+                    [disabled]="processingPaymentId() === payment.id"
+                    (click)="rejectPayment(payment)"
+                  >
+                    Recusar
+                  </button>
+                  <button
+                    class="primary-button"
+                    type="button"
+                    [disabled]="processingPaymentId() === payment.id"
+                    (click)="confirmPayment(payment)"
+                  >
+                    Confirmar
+                  </button>
+                </span>
+              </article>
+            }
+            @for (
+              transfer of dashboard.pendingSettlementConfirmations.slice(
+                0,
+                4 - dashboard.pendingConfirmations.slice(0, 4).length
+              );
+              track transfer.id
+            ) {
+              <article class="pending-item settlement-pending-item">
+                <span class="pending-avatar settlement-avatar">⇄</span>
+                <span class="pending-copy">
+                  <strong>{{ transfer.fromPerson.name }}</strong>
+                  <small>
+                    Pagamento simplificado · {{ transfer.paymentDate | date: 'dd/MM/yyyy' }}
+                  </small>
+                  @if (transfer.note) {
+                    <small class="payment-note">“{{ transfer.note }}”</small>
+                  }
+                </span>
+                <strong class="pending-amount">{{ transfer.amount | currency: 'BRL' }}</strong>
+                <span class="pending-actions">
+                  <button
+                    class="secondary-button"
+                    type="button"
+                    [disabled]="processingSettlementTransferId() === transfer.id"
+                    (click)="rejectSettlementTransfer(transfer)"
+                  >
+                    Recusar
+                  </button>
+                  <button
+                    class="primary-button"
+                    type="button"
+                    [disabled]="processingSettlementTransferId() === transfer.id"
+                    (click)="confirmSettlementTransfer(transfer)"
+                  >
+                    Confirmar
+                  </button>
+                </span>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="center-empty">
+            <span aria-hidden="true">✓</span>
+            <div>
+              <strong>Nenhuma confirmação pendente</strong>
+              <p>Quando alguém registrar um pagamento para você, ele aparecerá aqui.</p>
+            </div>
+          </div>
+        }
+      </article>
+
+      <article class="surface-card shared-activity-card">
+        <header class="card-header">
+          <div>
+            <span class="section-eyebrow">Atividade compartilhada</span>
+            <h2>Dívidas adicionadas por outras pessoas</h2>
+            <p>Itens que passaram a fazer parte do seu controle.</p>
+          </div>
+          <a routerLink="/debts">Ver todas</a>
+        </header>
+
+        @if (recentSharedDebts().length > 0) {
+          <div class="shared-debt-list">
+            @for (debt of recentSharedDebts(); track debt.id) {
+              <a class="shared-debt-item" routerLink="/debts">
+                <span class="shared-icon">{{ debt.category.slice(0, 2) }}</span>
+                <span class="shared-copy">
+                  <strong>{{ debt.description }}</strong>
+                  <small>{{ debtPositionLabel(debt) }} · pago por {{ debt.paidBy.name }}</small>
+                </span>
+                <span class="shared-value">
+                  <strong>{{ debtPositionAmount(debt) | currency: 'BRL' }}</strong>
+                  <small>{{ debt.status === 'PAID' ? 'Quitada' : 'Em aberto' }}</small>
+                </span>
+              </a>
+            }
+          </div>
+        } @else {
+          <div class="center-empty compact">
+            <span aria-hidden="true">↔</span>
+            <div>
+              <strong>Nenhuma atividade compartilhada</strong>
+              <p>Dívidas criadas por amigos e grupos aparecerão aqui.</p>
+            </div>
+          </div>
+        }
+      </article>
+    </section>
+
+    <div class="dashboard-grid">
+      <article class="surface-card cash-flow-card">
+        <header class="card-header">
+          <div>
+            <h2>Fluxo do mês</h2>
+            <p>Receitas e despesas atuais</p>
+          </div>
+          <span class="period-badge">{{ referenceMonth }}</span>
+        </header>
+        <div class="flow-chart" aria-label="Comparação entre receitas e despesas">
+          <div class="chart-amounts">
+            <span
+              ><i class="income-dot"></i>Receitas
+              <strong>{{ dashboard.summary.totalIncome | currency: 'BRL' }}</strong></span
+            >
+            <span
+              ><i class="expense-dot"></i>Despesas
+              <strong>{{ dashboard.summary.totalExpenses | currency: 'BRL' }}</strong></span
+            >
+          </div>
+          <div class="bar-track">
+            <span class="income-bar"></span>
+            <span
+              class="expense-bar"
+              [style.width.%]="
+                dashboard.summary.totalIncome > 0
+                  ? (dashboard.summary.totalExpenses / dashboard.summary.totalIncome) * 100
+                  : 0
+              "
+            ></span>
+          </div>
+          <div class="balance-callout">
+            <span>Resultado do período</span>
+            <strong [class.negative-text]="dashboard.summary.balance < 0">{{
+              dashboard.summary.balance | currency: 'BRL'
+            }}</strong>
+          </div>
+        </div>
+      </article>
+
+      <article class="surface-card trend-card">
+        <header class="card-header">
+          <div>
+            <h2>Evolução financeira</h2>
+            <p>Receitas e despesas nos últimos 6 meses</p>
+          </div>
+          <span class="trend-legend"><i></i>Receitas <i></i>Despesas</span>
+        </header>
+        <div class="trend-chart" aria-label="Evolução de receitas e despesas nos últimos seis meses">
+          @for (month of dashboard.summary.monthlyTrend; track month.referenceMonth) {
+            <div class="trend-month">
+              <div class="trend-bars">
+                <i
+                  class="trend-income"
+                  [style.height.%]="trendBarHeight(month, 'income')"
+                  [title]="'Receitas: ' + (month.totalIncome | currency: 'BRL')"
+                ></i>
+                <i
+                  class="trend-expense"
+                  [style.height.%]="trendBarHeight(month, 'expense')"
+                  [title]="'Despesas: ' + (month.totalExpenses | currency: 'BRL')"
+                ></i>
+              </div>
+              <span>{{ monthLabel(month.referenceMonth) }}</span>
+            </div>
+          }
+        </div>
+        <div class="trend-result">
+          <span>Saldo no período</span>
+          <strong
+            [class.negative-text]="
+              dashboard.summary.monthlyTrend.at(-1)?.balance &&
+              dashboard.summary.monthlyTrend.at(-1)!.balance < 0
+            "
+          >{{ dashboard.summary.monthlyTrend.at(-1)?.balance ?? 0 | currency: 'BRL' }}</strong>
+        </div>
+      </article>
+
+      <article class="surface-card budget-card">
+        <header class="card-header">
+          <div>
+            <h2>Orçamento do mês</h2>
+            <p>Limites planejados por categoria</p>
+          </div>
+          <a routerLink="/finance">Ajustar</a>
+        </header>
+        @if (dashboard.summary.budget.categories.length > 0) {
+          <div class="budget-overview">
+            <div>
+              <span>Consumido</span>
+              <strong>{{ dashboard.summary.budget.totalSpent | currency: 'BRL' }}</strong>
+            </div>
+            <div>
+              <span>Planejado</span>
+              <strong>{{ dashboard.summary.budget.totalPlanned | currency: 'BRL' }}</strong>
+            </div>
+          </div>
+          <div class="budget-list">
+            @for (category of dashboard.summary.budget.categories; track category.category) {
+              @if (category.planned > 0) {
+                <div class="budget-item" [class.critical]="category.usagePercentage >= 100">
+                  <span>
+                    <strong>{{ categoryLabel(category.category) }}</strong>
+                    <small>{{ category.usagePercentage | number: '1.0-0' }}%</small>
+                  </span>
+                  <div class="budget-track">
+                    <i [style.width.%]="budgetBarWidth(category)"></i>
+                  </div>
+                </div>
+              }
+            }
+          </div>
+          @if (dashboard.summary.budgetAlerts.length > 0) {
+            <div class="budget-alerts">
+              @for (alert of dashboard.summary.budgetAlerts; track alert.category) {
+                <p [class.critical]="alert.severity === 'CRITICAL'">
+                  <strong>{{ categoryLabel(alert.category) }}</strong>
+                  {{ alert.severity === 'CRITICAL' ? 'excedeu o limite' : 'está perto do limite' }}
+                </p>
+              }
+            </div>
+          }
+        } @else {
+          <div class="compact-empty">
+            <span>◎</span>
+            <p>Defina limites por categoria para acompanhar seu orçamento.</p>
+            <a routerLink="/finance">Criar orçamento</a>
+          </div>
+        }
+      </article>
+
+      <article class="surface-card categories-card">
+        <header class="card-header">
+          <div>
+            <h2>Despesas por categoria</h2>
+            <p>Onde seu dinheiro foi usado</p>
+          </div>
+          <a routerLink="/finance">Ver todas</a>
+        </header>
+        @if (dashboard.categoryTotals.length > 0) {
+          <div class="category-list">
+            @for (category of dashboard.categoryTotals.slice(0, 5); track category.category) {
+              <div class="category-item">
+                <span class="category-icon">{{ categoryIcon(category.category) }}</span>
+                <div class="category-copy">
+                  <span
+                    ><strong>{{ categoryLabel(category.category) }}</strong
+                    ><small>{{ category.percentage | percent: '1.0-0' }}</small></span
+                  >
+                  <div class="category-track">
+                    <i [style.width.%]="categoryBarWidth(category)"></i>
+                  </div>
+                </div>
+                <strong>{{ category.amount | currency: 'BRL' }}</strong>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="compact-empty">
+            <span>◎</span>
+            <p>As categorias aparecerão após sua primeira despesa.</p>
+          </div>
+        }
+      </article>
+
+      <article class="surface-card transactions-card">
+        <header class="card-header">
+          <div>
+            <h2>Transações recentes</h2>
+            <p>Últimos lançamentos registrados</p>
+          </div>
+          <a routerLink="/finance">Ver todas</a>
+        </header>
+        @if (dashboard.recentTransactions.length > 0) {
+          <div class="transaction-list">
+            @for (
+              transaction of dashboard.recentTransactions;
+              track transaction.kind + transaction.id
+            ) {
+              <div class="transaction-item">
+                <span class="transaction-icon" [class.expense]="transaction.kind === 'expense'">
+                  {{
+                    transaction.kind === 'income'
+                      ? 'RE'
+                      : categoryIcon(transaction.category ?? 'OTHER')
+                  }}
+                </span>
+                <span class="transaction-copy">
+                  <strong>{{ transaction.description }}</strong>
+                  <small>{{ transaction.transactionDate | date: 'dd MMM' }}</small>
+                </span>
+                <strong class="transaction-amount" [class.expense]="transaction.kind === 'expense'">
+                  {{ transaction.kind === 'income' ? '+' : '−' }}
+                  {{ transaction.amount | currency: 'BRL' }}
+                </strong>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="compact-empty">
+            <span>↗</span>
+            <p>Nenhuma transação registrada neste período.</p>
+            <a routerLink="/finance">Adicionar lançamento</a>
+          </div>
+        }
+      </article>
+
+      <article class="surface-card settlements-card">
+        <header class="card-header">
+          <div>
+            <h2>Pagamentos simplificados</h2>
+            <p>Menos transferências entre pessoas</p>
+          </div>
+          <span class="savings-badge">
+            {{ dashboard.settlements.simplifiedTransferCount }} em vez de
+            {{ dashboard.settlements.originalTransferCount }}
+          </span>
+        </header>
+        @if (dashboard.settlements.transfers.length > 0) {
+          <div class="settlement-list">
+            @for (
+              transfer of dashboard.settlements.transfers.slice(0, 3);
+              track transfer.fromPerson.id + transfer.toPerson.id
+            ) {
+              <div class="settlement-item">
+                <span class="person-avatar">{{
+                  transfer.fromPerson.name.slice(0, 2).toUpperCase()
+                }}</span>
+                <span class="settlement-copy"
+                  ><strong>{{ transfer.fromPerson.name }}</strong
+                  ><small>paga para {{ transfer.toPerson.name }}</small></span
+                >
+                <strong>{{ transfer.amount | currency: 'BRL' }}</strong>
+              </div>
+            }
+          </div>
+          <a class="settlement-link" routerLink="/debts">Ver plano completo</a>
+        } @else {
+          <div class="compact-empty success-empty">
+            <span>✓</span>
+            <p>Nenhuma transferência pendente. Tudo certo por aqui.</p>
+          </div>
+        }
+      </article>
+    </div>
+  }
+</section>

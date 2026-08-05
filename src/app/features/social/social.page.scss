@@ -1,0 +1,42 @@
+.social-page { gap: 20px; }
+.security-badge { padding: 8px 12px; border-radius: 999px; background: var(--action-primary-soft); color: var(--action-primary); font-size: .72rem; font-weight: 800; }
+.social-alert { padding: 13px 16px; border-radius: 12px; font-size: .8rem; }
+.social-alert.success { background: color-mix(in srgb, var(--status-positive) 14%, transparent); color: var(--status-positive); }
+.social-alert.error { background: color-mix(in srgb, var(--status-negative) 12%, transparent); color: var(--status-negative); }
+.social-grid, .groups-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.social-card { padding: 20px; }
+.social-card > header { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.social-card h2, .social-card h3, .social-card p { margin: 0; }
+.social-card h2 { font-size: 1rem; }
+.social-card header p, .social-card small, .social-card p { color: var(--text-secondary); font-size: .72rem; }
+.card-icon { display: grid; width: 38px; height: 38px; flex: 0 0 auto; border-radius: 11px; place-items: center; background: var(--action-primary-soft); color: var(--action-primary); font-weight: 850; }
+.invite-card form, .group-form { display: grid; gap: 10px; }
+.invite-card label, .group-form > label, fieldset legend { color: var(--text-secondary); font-size: .7rem; font-weight: 700; }
+.inline-form { display: flex; gap: 9px; }
+.inline-form input { min-width: 0; flex: 1; }
+input, textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--border-subtle); border-radius: 10px; background: var(--background-subtle); color: var(--text-primary); padding: 11px 12px; font: inherit; }
+.dev-hint { color: var(--action-primary) !important; }
+.compact-list, .friend-grid, .group-list { display: grid; gap: 10px; }
+.request-row, .friend-card, .group-row, .member-check { display: flex; align-items: center; gap: 11px; padding: 11px; border-radius: 11px; background: var(--background-subtle); }
+.request-row > span:nth-child(2), .friend-card > span:nth-child(2), .member-check > span:last-child { display: grid; min-width: 0; flex: 1; }
+.request-row small, .friend-card small, .member-check small { overflow: hidden; text-overflow: ellipsis; }
+.avatar { display: grid; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 10px; place-items: center; background: var(--action-primary-soft); color: var(--action-primary); font-size: .68rem; font-weight: 850; }
+.avatar.large { width: 42px; height: 42px; }.avatar.small { width: 30px; height: 30px; border-radius: 9px; }
+.row-actions { display: flex; gap: 7px; }
+.accept-button, .icon-button, .text-danger { border: 0; cursor: pointer; font: inherit; }
+.accept-button { padding: 7px 10px; border-radius: 8px; background: var(--action-primary); color: white; font-size: .68rem; font-weight: 750; }
+.icon-button { width: 30px; border-radius: 8px; background: var(--surface-raised); color: var(--text-secondary); }
+.text-danger { margin-left: auto; background: transparent; color: var(--status-negative); font-size: .68rem; font-weight: 750; }
+.compact-empty { padding: 20px; border-radius: 11px; background: var(--background-subtle); text-align: center; }
+.outgoing-line { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; color: var(--text-secondary); font-size: .7rem; }
+.outgoing-line span { padding: 4px 7px; border-radius: 7px; background: var(--background-subtle); }
+.group-form textarea { resize: vertical; }
+fieldset { display: grid; margin: 4px 0; padding: 10px; border: 1px solid var(--border-subtle); border-radius: 11px; gap: 7px; }
+.member-check { cursor: pointer; padding: 8px; }
+.member-check input { width: auto; }
+.group-row { align-items: center; }
+.group-row > div:first-child { min-width: 0; flex: 1; }.group-row h3 { font-size: .86rem; }.group-row p { margin-top: 3px; }
+.member-stack { display: flex; align-items: center; }.member-stack .avatar { margin-left: -5px; border: 2px solid var(--surface-raised); }.member-stack small { margin-left: 6px; white-space: nowrap; }
+.member-badge { color: var(--text-secondary); font-size: .68rem; }
+@media (max-width: 860px) { .social-grid, .groups-layout { grid-template-columns: 1fr; } }
+@media (max-width: 560px) { .inline-form { flex-direction: column; }.request-row { align-items: flex-start; }.row-actions { margin-left: auto; }.group-row { flex-wrap: wrap; } }

@@ -1,0 +1,543 @@
+:host {
+  display: block;
+  min-height: 100vh;
+}
+
+.app-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 20;
+  display: flex;
+  width: var(--sidebar-width);
+  padding: 28px 18px 20px;
+  border-right: 1px solid var(--border-subtle);
+  background: var(--background-elevated);
+  flex-direction: column;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 44px;
+  color: var(--text-primary);
+}
+
+.brand-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  padding: 8px 7px;
+  border-radius: 11px;
+  background: var(--action-primary);
+  gap: 5px;
+}
+
+.brand-mark span {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.brand-mark span::after {
+  position: absolute;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--action-primary);
+  content: '';
+  transform: translateY(-50%);
+}
+
+.brand-mark span:first-child::after {
+  left: 4px;
+}
+
+.brand-mark span:last-child::after {
+  right: 4px;
+}
+
+.brand-name {
+  font-size: 1.05rem;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+}
+
+.brand-name strong {
+  color: var(--action-primary);
+  font-weight: 800;
+}
+
+.sidebar-nav {
+  display: grid;
+  margin-top: 48px;
+  gap: 7px;
+}
+
+.sidebar-nav a,
+.support-button {
+  display: flex;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 11px;
+  align-items: center;
+  gap: 13px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 650;
+  text-align: left;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease;
+}
+
+.sidebar-nav a:hover,
+.sidebar-nav a.active {
+  background: var(--action-primary-soft);
+  color: var(--action-primary);
+}
+
+.nav-badge {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  margin-left: auto;
+  border-radius: 999px;
+  place-items: center;
+  background: var(--status-negative);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 850;
+}
+
+.sidebar-nav svg,
+.support-button svg,
+.logout-button svg,
+.theme-button svg,
+.mobile-nav svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.sidebar-nav a:first-child svg,
+.mobile-nav a:first-child svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+.sidebar-bottom {
+  display: grid;
+  margin-top: auto;
+  gap: 16px;
+}
+
+.support-button {
+  width: 100%;
+}
+
+.support-button:hover {
+  background: var(--status-negative-soft);
+  color: var(--status-negative);
+}
+
+.profile-card {
+  display: grid;
+  min-width: 0;
+  padding: 13px 10px;
+  border-top: 1px solid var(--border-subtle);
+  grid-template-columns: 38px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  place-items: center;
+  background: var(--action-primary-soft);
+  color: var(--action-primary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.profile-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.profile-copy strong {
+  font-size: 0.82rem;
+}
+
+.profile-copy small {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logout-button,
+.theme-button,
+.notification-button,
+.mobile-account-button {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  place-items: center;
+  background: var(--background-elevated);
+  color: var(--text-secondary);
+}
+
+.mobile-account-button { overflow: hidden; text-decoration: none; font-size: .68rem; font-weight: 800; }
+.mobile-account-button img { width: 100%; height: 100%; object-fit: cover; }
+
+.logout-button:hover,
+.theme-button:hover,
+.notification-button:hover {
+  color: var(--action-primary);
+}
+
+.app-content {
+  min-height: 100vh;
+  padding: 0 clamp(24px, 4vw, 58px) 48px;
+  margin-left: var(--sidebar-width);
+}
+
+.desktop-toolbar {
+  display: flex;
+  height: 82px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.desktop-toolbar-actions,
+.mobile-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.notification-button {
+  position: relative;
+}
+
+.notification-button svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.notification-button > span {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 19px;
+  height: 19px;
+  padding: 0 5px;
+  border: 2px solid var(--background-primary);
+  border-radius: 999px;
+  place-items: center;
+  background: var(--status-negative);
+  color: #fff;
+  font-size: 0.52rem;
+  font-weight: 850;
+}
+
+.notification-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  padding: 0;
+  border: 0;
+  background: color-mix(in srgb, #102a2a 20%, transparent);
+}
+
+.notification-panel {
+  position: fixed;
+  top: 70px;
+  right: clamp(24px, 4vw, 58px);
+  z-index: 40;
+  display: grid;
+  width: min(390px, calc(100vw - 32px));
+  max-height: min(640px, calc(100vh - 92px));
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 18px;
+  background: var(--background-elevated);
+  box-shadow: var(--shadow-md);
+}
+
+.notification-panel > header {
+  display: flex;
+  padding: 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notification-panel header span {
+  color: var(--action-primary);
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+}
+
+.notification-panel h2 {
+  margin: 4px 0 0;
+  font-size: 1rem;
+}
+
+.notification-panel header button {
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: var(--action-primary);
+  font-size: 0.63rem;
+  font-weight: 750;
+}
+
+.notification-list {
+  overflow-y: auto;
+}
+
+.notification-item {
+  display: grid;
+  width: 100%;
+  padding: 15px 18px;
+  border: 0;
+  border-bottom: 1px solid var(--border-subtle);
+  grid-template-columns: 8px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+}
+
+.notification-item:hover,
+.notification-item.unread {
+  background: var(--action-primary-soft);
+}
+
+.notification-dot {
+  width: 7px;
+  height: 7px;
+  margin-top: 6px;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.notification-item.unread .notification-dot {
+  background: var(--action-primary);
+}
+
+.notification-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.notification-copy strong {
+  font-size: 0.75rem;
+}
+
+.notification-copy small,
+.notification-copy time {
+  color: var(--text-secondary);
+  font-size: 0.64rem;
+  line-height: 1.45;
+}
+
+.notification-copy time {
+  margin-top: 2px;
+  font-size: 0.57rem;
+}
+
+.notification-empty {
+  display: grid;
+  min-height: 230px;
+  padding: 32px;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.notification-empty > span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  margin-bottom: 5px;
+  border-radius: 50%;
+  place-items: center;
+  background: var(--status-positive-soft);
+  color: var(--status-positive);
+}
+
+.notification-empty strong {
+  color: var(--text-primary);
+  font-size: 0.78rem;
+}
+
+.notification-empty p {
+  margin: 0;
+  font-size: 0.65rem;
+}
+
+.mobile-header,
+.mobile-nav {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .sidebar,
+  .desktop-toolbar {
+    display: none;
+  }
+
+  .mobile-header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    height: 68px;
+    padding: env(safe-area-inset-top) 18px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    align-items: center;
+    justify-content: space-between;
+    background: color-mix(in srgb, var(--background-elevated) 92%, transparent);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-header .brand-mark {
+    width: 32px;
+    height: 32px;
+    padding: 7px 6px;
+  }
+
+  .notification-panel {
+    top: 60px;
+    right: 16px;
+    max-height: calc(100vh - 148px);
+  }
+
+  .notification-button > span {
+    border-color: var(--background-elevated);
+  }
+
+  .app-content {
+    padding: 24px 18px calc(104px + env(safe-area-inset-bottom));
+    margin-left: 0;
+  }
+
+  .mobile-nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 30;
+    display: grid;
+    min-height: 72px;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--border-subtle);
+    grid-template-columns: repeat(5, 1fr);
+    background: color-mix(in srgb, var(--background-elevated) 94%, transparent);
+    backdrop-filter: blur(18px);
+  }
+
+  .mobile-nav a {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 52px;
+    border-radius: 12px;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    color: var(--text-secondary);
+    font-size: 0.65rem;
+    font-weight: 700;
+  }
+
+  .mobile-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 19px);
+    display: grid;
+    min-width: 17px;
+    height: 17px;
+    padding: 0 4px;
+    border: 2px solid var(--background-elevated);
+    border-radius: 999px;
+    place-items: center;
+    background: var(--status-negative);
+    color: #ffffff;
+    font-size: 0.52rem;
+    font-weight: 850;
+  }
+
+  .mobile-nav a.active {
+    color: var(--action-primary);
+  }
+
+  .mobile-nav .quick-add {
+    width: 50px;
+    height: 50px;
+    min-height: 50px;
+    margin: -20px auto 0;
+    border: 5px solid var(--background-primary);
+    border-radius: 50%;
+    background: var(--action-primary);
+    color: #ffffff;
+    box-shadow: var(--shadow-md);
+  }
+
+  .mobile-nav .quick-add svg {
+    width: 23px;
+    height: 23px;
+  }
+}
+
+@media (max-width: 380px) {
+  .brand-name {
+    font-size: 0.94rem;
+  }
+
+  .app-content {
+    padding-right: 14px;
+    padding-left: 14px;
+  }
+}

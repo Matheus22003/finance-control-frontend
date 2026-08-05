@@ -1,0 +1,13 @@
+<main class="login-page auth-result-page">
+  <button class="theme-toggle" type="button" (click)="themeService.toggle()" aria-label="Alternar tema">◐</button>
+  <section class="visual-panel"><div class="visual-content"><a class="brand" routerLink="/login"><span class="brand-mark"><span></span><span></span></span><span>Finance <strong>Control</strong></span></a><div class="hero-copy"><span class="eyebrow">Acesso protegido</span><h1>Seu novo e-mail.<br />A mesma conta segura.</h1><p>Depois da confirmação, todas as sessões anteriores serão encerradas.</p></div></div></section>
+  <section class="form-panel"><div class="form-container result-card">
+    @if (state() === 'confirming') {
+      <span class="result-icon"><span class="spinner"></span></span><h2>Confirmando novo e-mail…</h2><p>Aguarde só um instante.</p>
+    } @else if (state() === 'confirmed') {
+      <span class="result-icon success">✓</span><h2>E-mail alterado!</h2><p><strong>{{ newEmail }}</strong> agora é seu endereço de acesso. Entre novamente para continuar.</p><a class="primary-button submit-button" routerLink="/login">Entrar com o novo e-mail</a>
+    } @else {
+      <span class="result-icon error">!</span><h2>Link inválido ou expirado</h2><p>Entre na sua conta e solicite novamente a alteração do endereço.</p><a class="primary-button submit-button" routerLink="/login">Voltar ao login</a>
+    }
+  </div></section>
+</main>

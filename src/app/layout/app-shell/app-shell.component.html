@@ -1,0 +1,234 @@
+<div class="app-shell">
+  <aside class="sidebar" aria-label="Navegação principal">
+    <a class="brand" routerLink="/dashboard" aria-label="Finance Control — início">
+      <span class="brand-mark" aria-hidden="true">
+        <span></span>
+        <span></span>
+      </span>
+      <span class="brand-name">Finance <strong>Control</strong></span>
+    </a>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z" />
+        </svg>
+        <span>Visão geral</span>
+      </a>
+      <a routerLink="/finance" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 6.5h16v11H4v-11Zm0 3h16M8 14h3" />
+        </svg>
+        <span>Finanças</span>
+      </a>
+      <a routerLink="/debts" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8.5 14.5 6 17l-3-3 2.5-2.5m10-2L18 7l3 3-2.5 2.5M8 16l8-8M7 7h5m5 10h-5" />
+        </svg>
+        <span>Dívidas</span>
+        @if (pendingDebtCount() > 0) {
+          <span class="nav-badge" aria-label="Pagamentos aguardando confirmação">{{
+            pendingDebtCount()
+          }}</span>
+        }
+      </a>
+      <a routerLink="/people" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m6.5-9.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-1a3 3 0 0 1 0 5.8m4.5 4.7v-1.5a4 4 0 0 0-3-3.87"
+          />
+        </svg>
+        <span>Pessoas</span>
+      </a>
+      <a routerLink="/social" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8-1a2.5 2.5 0 1 0 0-5m-8 9c-3 0-5 1.6-5 4v1h10v-1c0-2.4-2-4-5-4Zm7 1c2.8 0 5 1.4 5 3.5V19h-5"
+          />
+        </svg>
+        <span>Amigos & grupos</span>
+      </a>
+      <a routerLink="/security" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 2.8 8.2 7 10 4.2-1.8 7-5.2 7-10V6l-7-3Zm-3 9 2 2 4-4" /></svg>
+        <span>Segurança</span>
+      </a>
+      <a routerLink="/account" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" /></svg>
+        <span>Minha conta</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <button class="support-button" type="button" title="Em breve">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10Z" />
+        </svg>
+        <span>Apoie o projeto</span>
+      </button>
+
+      <div class="profile-card">
+        <a class="avatar" routerLink="/account" aria-label="Abrir minha conta">
+          @if (avatarUrl()) { <img [src]="avatarUrl()" alt="" /> } @else { {{ userInitials() }} }
+        </a>
+        <span class="profile-copy">
+          <strong>{{ userDisplayName() }}</strong>
+          <small>{{ userEmail() }}</small>
+        </span>
+        <button type="button" class="logout-button" (click)="logout()" aria-label="Sair">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 17l5-5-5-5m5 5H3m10-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </aside>
+
+  <header class="mobile-header">
+    <a class="brand" routerLink="/dashboard" aria-label="Finance Control — início">
+      <span class="brand-mark" aria-hidden="true"><span></span><span></span></span>
+      <span class="brand-name">Finance <strong>Control</strong></span>
+    </a>
+    <span class="mobile-header-actions">
+      <a class="mobile-account-button" routerLink="/account" aria-label="Abrir minha conta">
+        @if (avatarUrl()) { <img [src]="avatarUrl()" alt="" /> } @else { {{ userInitials() }} }
+      </a>
+      <button
+        class="notification-button"
+        type="button"
+        (click)="toggleNotifications()"
+        aria-label="Abrir notificações"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+        </svg>
+        @if (unreadNotificationCount() > 0) {
+          <span>{{ unreadNotificationCount() > 99 ? '99+' : unreadNotificationCount() }}</span>
+        }
+      </button>
+      <button
+        class="theme-button"
+        type="button"
+        (click)="themeService.toggle()"
+        aria-label="Alternar tema"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            d="M12 3v2m0 14v2M3 12h2m14 0h2M5.64 5.64l1.42 1.42m9.88 9.88 1.42 1.42m0-12.72-1.42 1.42M7.06 16.94l-1.42 1.42M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
+          />
+        </svg>
+      </button>
+    </span>
+  </header>
+
+  <main class="app-content">
+    <div class="desktop-toolbar">
+      <span></span>
+      <span class="desktop-toolbar-actions">
+        <button
+          class="notification-button"
+          type="button"
+          (click)="toggleNotifications()"
+          aria-label="Abrir notificações"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+          </svg>
+          @if (unreadNotificationCount() > 0) {
+            <span>{{ unreadNotificationCount() > 99 ? '99+' : unreadNotificationCount() }}</span>
+          }
+        </button>
+        <button
+          class="theme-button"
+          type="button"
+          (click)="themeService.toggle()"
+          aria-label="Alternar tema"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M20 15.2A8.4 8.4 0 0 1 8.8 4 8.5 8.5 0 1 0 20 15.2Z" />
+          </svg>
+        </button>
+      </span>
+    </div>
+    <router-outlet />
+  </main>
+
+  @if (notificationsOpen()) {
+    <button
+      class="notification-backdrop"
+      type="button"
+      aria-label="Fechar notificações"
+      (click)="closeNotifications()"
+    ></button>
+    <aside class="notification-panel" aria-label="Central de notificações">
+      <header>
+        <div>
+          <span>ATUALIZAÇÕES</span>
+          <h2>Notificações</h2>
+        </div>
+        @if (unreadNotificationCount() > 0) {
+          <button type="button" (click)="markAllNotificationsAsRead()">
+            Marcar todas como lidas
+          </button>
+        }
+      </header>
+      <div class="notification-list">
+        @for (notification of notifications(); track notification.id) {
+          <button
+            class="notification-item"
+            [class.unread]="!notification.isRead"
+            type="button"
+            (click)="openNotification(notification)"
+          >
+            <span class="notification-dot" aria-hidden="true"></span>
+            <span class="notification-copy">
+              <strong>{{ notification.title }}</strong>
+              <small>{{ notification.message }}</small>
+              <time>{{ notification.createdAt | date: 'dd/MM/yyyy HH:mm' }}</time>
+            </span>
+          </button>
+        } @empty {
+          <div class="notification-empty">
+            <span aria-hidden="true">✓</span>
+            <strong>Nenhuma notificação</strong>
+            <p>As atualizações entre suas contas aparecerão aqui.</p>
+          </div>
+        }
+      </div>
+    </aside>
+  }
+
+  <nav class="mobile-nav" aria-label="Navegação mobile">
+    <a routerLink="/dashboard" routerLinkActive="active">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z" />
+      </svg>
+      <span>Início</span>
+    </a>
+    <a routerLink="/finance" routerLinkActive="active">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 6.5h16v11H4v-11Zm0 3h16M8 14h3" />
+      </svg>
+      <span>Finanças</span>
+    </a>
+    <a class="quick-add" routerLink="/finance" aria-label="Adicionar lançamento">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+    </a>
+    <a routerLink="/debts" routerLinkActive="active">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16l8-8M7 7h5m5 10h-5" /></svg>
+      <span>Dívidas</span>
+      @if (pendingDebtCount() > 0) {
+        <span class="mobile-nav-badge" aria-label="Pagamentos aguardando confirmação">{{
+          pendingDebtCount()
+        }}</span>
+      }
+    </a>
+    <a routerLink="/social" routerLinkActive="active">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m6.5-9.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"
+        />
+      </svg>
+      <span>Amigos</span>
+    </a>
+  </nav>
+</div>

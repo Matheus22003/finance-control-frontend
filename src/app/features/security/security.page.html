@@ -1,0 +1,27 @@
+<section class="security-page">
+  <header><span class="eyebrow">SEGURANÇA</span><h1>Senha, dispositivos e sessões</h1><p>Atualize suas credenciais e encerre acessos que não reconhecer.</p></header>
+
+  <article class="password-card">
+    <div class="password-copy"><h2>Alterar senha</h2><p>Após a alteração, todas as sessões serão encerradas e você precisará entrar novamente.</p></div>
+    @if (passwordError()) { <div class="message error" role="alert">{{ passwordError() }}</div> }
+    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" novalidate>
+      <div class="field"><label for="currentPassword">Senha atual</label><input id="currentPassword" type="password" formControlName="currentPassword" autocomplete="current-password" /></div>
+      <div class="field"><label for="newPassword">Nova senha</label><input id="newPassword" type="password" formControlName="newPassword" autocomplete="new-password" /><small>Maiúscula, minúscula, número e símbolo.</small></div>
+      <div class="field"><label for="confirmation">Confirme a nova senha</label><input id="confirmation" type="password" formControlName="confirmation" autocomplete="new-password" /></div>
+      <button class="primary-action" type="submit" [disabled]="isChangingPassword()">{{ isChangingPassword() ? 'Alterando…' : 'Alterar senha e sair' }}</button>
+    </form>
+  </article>
+
+  <div class="sessions-heading"><h2>Dispositivos conectados</h2><p>As sessões expiram automaticamente, mas você pode encerrá-las antes.</p></div>
+  @if (errorMessage()) { <div class="message error" role="alert">{{ errorMessage() }}</div> }
+  <div class="session-list">
+    @if (isLoading()) { <div class="message">Carregando sessões…</div> }
+    @for (session of sessions(); track session.id) {
+      <article class="session-card" [class.current]="session.isCurrent">
+        <span class="device-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 5h16v11H4V5Zm5 15h6m-3-4v4" /></svg></span>
+        <div><h2>{{ session.deviceName }}</h2><p>{{ session.ipAddress || 'IP não identificado' }} · último uso {{ session.lastUsedAt | date: 'dd/MM/yyyy HH:mm' }}</p><small>Conectado em {{ session.createdAt | date: 'dd/MM/yyyy HH:mm' }}</small></div>
+        <div class="session-actions">@if (session.isCurrent) { <span>Este dispositivo</span> }<button type="button" (click)="revoke(session)" [disabled]="revokingId() === session.id">{{ revokingId() === session.id ? 'Encerrando…' : 'Encerrar' }}</button></div>
+      </article>
+    } @empty { @if (!isLoading()) { <div class="message">Nenhuma sessão ativa.</div> } }
+  </div>
+</section>

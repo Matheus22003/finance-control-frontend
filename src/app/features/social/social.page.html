@@ -1,0 +1,139 @@
+<section class="data-page social-page">
+  <header class="page-header">
+    <div>
+      <h1>Amigos & grupos</h1>
+      <p>Compartilhe despesas apenas com pessoas autorizadas por você.</p>
+    </div>
+    <span class="security-badge">Ambiente protegido</span>
+  </header>
+
+  @if (successMessage()) {
+    <div class="social-alert success" role="status">{{ successMessage() }}</div>
+  }
+  @if (errorMessage()) {
+    <div class="social-alert error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (isLoading()) {
+    <div class="loading-state surface-card">Carregando conexões…</div>
+  } @else {
+    <div class="social-grid">
+      <article class="surface-card social-card invite-card">
+        <header>
+          <span class="card-icon">+</span>
+          <div><h2>Adicionar amigo</h2><p>O convite exige o e-mail exato da conta.</p></div>
+        </header>
+        <form [formGroup]="friendForm" (ngSubmit)="sendFriendRequest()">
+          <label for="friend-email">E-mail</label>
+          <div class="inline-form">
+            <input id="friend-email" type="email" formControlName="email" placeholder="amigo@exemplo.com" />
+            <button class="primary-button" type="submit" [disabled]="isSending()">
+              {{ isSending() ? 'Enviando…' : 'Enviar convite' }}
+            </button>
+          </div>
+          @if (friendForm.controls.email.touched && friendForm.controls.email.invalid) {
+            <small class="field-error">Informe um e-mail válido.</small>
+          }
+          <small class="dev-hint">Para testar localmente: friend@financecontrol.local</small>
+        </form>
+      </article>
+
+      <article class="surface-card social-card request-card">
+        <header><span class="card-icon">↓</span><div><h2>Convites recebidos</h2><p>{{ incoming().length }} pendente(s)</p></div></header>
+        @if (incoming().length === 0) {
+          <p class="compact-empty">Nenhum convite aguardando sua resposta.</p>
+        } @else {
+          <div class="compact-list">
+            @for (request of incoming(); track request.id) {
+              <div class="request-row">
+                <span class="avatar">{{ request.requesterDisplayName.slice(0, 2).toUpperCase() }}</span>
+                <span><strong>{{ request.requesterDisplayName }}</strong><small>{{ request.requesterEmail }}</small></span>
+                <span class="row-actions">
+                  <button class="accept-button" type="button" [disabled]="activeRequestId() === request.id" (click)="answerRequest(request.id, true)">Aceitar</button>
+                  <button class="icon-button" type="button" aria-label="Recusar convite" [disabled]="activeRequestId() === request.id" (click)="answerRequest(request.id, false)">×</button>
+                </span>
+              </div>
+            }
+          </div>
+        }
+      </article>
+    </div>
+
+    <article class="surface-card social-card friends-card">
+      <header><span class="card-icon">☺</span><div><h2>Seus amigos</h2><p>{{ friends().length }} conexão(ões) autorizada(s)</p></div></header>
+      @if (friends().length === 0) {
+        <div class="compact-empty">Aceite um convite para liberar a divisão automática de despesas.</div>
+      } @else {
+        <div class="friend-grid">
+          @for (friend of friends(); track friend.userId) {
+            <div class="friend-card">
+              <span class="avatar large">{{ friend.displayName.slice(0, 2).toUpperCase() }}</span>
+              <span><strong>{{ friend.displayName }}</strong><small>{{ friend.email }}</small></span>
+              <button class="text-danger" type="button" (click)="removeFriend(friend)">Remover</button>
+            </div>
+          }
+        </div>
+      }
+      @if (outgoing().length > 0) {
+        <div class="outgoing-line">
+          <strong>Aguardando resposta:</strong>
+          @for (request of outgoing(); track request.id) {
+            <span>{{ request.addresseeDisplayName }}</span>
+          }
+        </div>
+      }
+    </article>
+
+    <div class="groups-layout">
+      <article class="surface-card social-card group-form-card">
+        <header><span class="card-icon">G</span><div><h2>Novo grupo</h2><p>Organize viagens, casas ou eventos.</p></div></header>
+        <form [formGroup]="groupForm" (ngSubmit)="createGroup()" class="group-form">
+          <label>Nome<input type="text" formControlName="name" placeholder="Ex.: Viagem para Floripa" /></label>
+          <label>Descrição<textarea formControlName="description" rows="3" placeholder="Contexto opcional"></textarea></label>
+          <fieldset>
+            <legend>Membros</legend>
+            @if (friends().length === 0) {
+              <small>Aceite amigos antes de criar um grupo com membros.</small>
+            }
+            @for (friend of friends(); track friend.userId) {
+              <label class="member-check">
+                <input #memberCheck type="checkbox" [checked]="memberIsSelected(friend.userId)" (change)="toggleGroupMember(friend.userId, memberCheck.checked)" />
+                <span class="avatar small">{{ friend.displayName.slice(0, 2).toUpperCase() }}</span>
+                <span>{{ friend.displayName }}<small>{{ friend.email }}</small></span>
+              </label>
+            }
+          </fieldset>
+          <button class="primary-button" type="submit" [disabled]="isCreatingGroup()">
+            {{ isCreatingGroup() ? 'Criando…' : 'Criar grupo' }}
+          </button>
+        </form>
+      </article>
+
+      <article class="surface-card social-card groups-card">
+        <header><span class="card-icon">≡</span><div><h2>Meus grupos</h2><p>{{ groups().length }} grupo(s)</p></div></header>
+        @if (groups().length === 0) {
+          <div class="compact-empty">Você ainda não participa de grupos.</div>
+        } @else {
+          <div class="group-list">
+            @for (group of groups(); track group.id) {
+              <article class="group-row">
+                <div><h3>{{ group.name }}</h3><p>{{ group.description || 'Sem descrição' }}</p></div>
+                <div class="member-stack">
+                  @for (member of group.members.slice(0, 4); track member.userId) {
+                    <span class="avatar small" [title]="member.displayName">{{ member.displayName.slice(0, 2).toUpperCase() }}</span>
+                  }
+                  <small>{{ group.members.length }} membro(s)</small>
+                </div>
+                @if (isGroupOwner(group)) {
+                  <button class="text-danger" type="button" (click)="deleteGroup(group)">Excluir</button>
+                } @else {
+                  <span class="member-badge">Membro</span>
+                }
+              </article>
+            }
+          </div>
+        }
+      </article>
+    </div>
+  }
+</section>
