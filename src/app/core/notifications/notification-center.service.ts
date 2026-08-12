@@ -1,6 +1,11 @@
 import { Injectable, signal } from '@angular/core';
-import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
-import { Subject, forkJoin } from 'rxjs';
+import {
+  HubConnection,
+  HubConnectionBuilder,
+  HubConnectionState,
+  LogLevel,
+} from '@microsoft/signalr';
+import { Subject, finalize, forkJoin } from 'rxjs';
 
 import { FinanceControlApiService } from '../api/finance-control-api.service';
 import { NotificationResponse } from '../api/api.models';
@@ -14,6 +19,7 @@ export class NotificationCenterService {
   private readonly changesState = new Subject<NotificationResponse>();
   private connection: HubConnection | null = null;
   private shouldStayConnected = false;
+  private alertSyncInProgress = false;
   private initialReconnectTimer: ReturnType<typeof setTimeout> | undefined;
 
   readonly notifications = this.notificationsState.asReadonly();
@@ -33,11 +39,13 @@ export class NotificationCenterService {
 
     this.shouldStayConnected = true;
     this.refresh();
+    this.synchronizeAlerts();
     this.connection = new HubConnectionBuilder()
       .withUrl('/api/v1/notifications/hub', {
         accessTokenFactory: () => this.authService.accessToken() ?? '',
       })
       .withAutomaticReconnect([0, 2_000, 10_000, 30_000])
+      .configureLogging(LogLevel.Warning)
       .build();
     this.connection.on('notificationReceived', (notification: NotificationResponse) => {
       this.notificationsState.update((current) => [
@@ -52,7 +60,7 @@ export class NotificationCenterService {
     this.connection.onreconnecting(() => this.connectedState.set(false));
     this.connection.onreconnected(() => {
       this.connectedState.set(true);
-      this.refresh();
+      this.synchronizeAlerts();
     });
     this.connection.onclose(() => {
       this.connectedState.set(false);
@@ -71,6 +79,20 @@ export class NotificationCenterService {
         this.unreadCountState.set(unreadCount.unreadCount);
       },
     });
+  }
+
+  synchronizeAlerts(): void {
+    if (this.alertSyncInProgress || !this.authService.isAuthenticated()) {
+      return;
+    }
+
+    this.alertSyncInProgress = true;
+    this.api
+      .syncNotificationAlerts()
+      .pipe(finalize(() => (this.alertSyncInProgress = false)))
+      .subscribe({
+        next: () => this.refresh(),
+      });
   }
 
   markAsRead(notification: NotificationResponse): void {
@@ -106,6 +128,7 @@ export class NotificationCenterService {
     const connection = this.connection;
     this.connection = null;
     this.connectedState.set(false);
+    this.alertSyncInProgress = false;
     this.notificationsState.set([]);
     this.unreadCountState.set(0);
     if (connection && connection.state !== HubConnectionState.Disconnected) {

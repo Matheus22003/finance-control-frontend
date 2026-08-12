@@ -16,6 +16,8 @@ export interface DashboardResponse {
   budget: MonthlyBudgetResponse;
   monthlyTrend: FinanceTrendMonth[];
   budgetAlerts: DashboardBudgetAlert[];
+  goals: FinancialGoalResponse[];
+  cashFlowProjection: CashFlowProjectionResponse;
 }
 
 export interface FinanceTrendMonth {
@@ -82,12 +84,47 @@ export interface IncomeResponse {
   createdAt: string;
   updatedAt: string;
   recurringTransactionId?: string | null;
+  goalAllocatedAmount: number;
+  goalAvailableAmount: number;
 }
 
 export interface IncomeRequest {
   description: string;
   amount: number;
   transactionDate: string;
+}
+
+export interface IncomeGoalAllocationItemResponse {
+  contributionId: string;
+  financialGoalId: string;
+  financialGoalName: string;
+  amount: number;
+  contributionDate: string;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface IncomeGoalAllocationResponse {
+  incomeId: string;
+  incomeDescription: string;
+  incomeAmount: number;
+  transactionDate: string;
+  goalAllocatedAmount: number;
+  goalAvailableAmount: number;
+  allocations: IncomeGoalAllocationItemResponse[];
+}
+
+export interface FinanceCategoryRequest {
+  name: string;
+}
+
+export interface FinanceCategoryResponse {
+  id: number;
+  code: string;
+  name: string;
+  defaultCategory: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ExpenseRequest extends IncomeRequest {
@@ -98,7 +135,7 @@ export interface ExpenseResponse extends IncomeResponse {
   category: FinanceCategory;
 }
 
-export type FinanceCategory = 'FOOD' | 'TRANSPORT' | 'RENT' | 'LEISURE' | 'HEALTH' | 'OTHER';
+export type FinanceCategory = string;
 
 export interface FinanceTransactionFilters {
   from?: string;
@@ -136,6 +173,7 @@ export interface RecurringTransactionResponse extends RecurringTransactionReques
 
 export interface BudgetCategoryResponse {
   category: FinanceCategory;
+  name: string;
   planned: number;
   spent: number;
   remaining: number;
@@ -148,6 +186,70 @@ export interface MonthlyBudgetResponse {
   totalSpent: number;
   totalRemaining: number;
   categories: BudgetCategoryResponse[];
+}
+
+export type FinancialGoalStatus = 'ACTIVE' | 'COMPLETED' | 'OVERDUE';
+
+export interface FinancialGoalRequest {
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  targetDate: string;
+}
+
+export interface FinancialGoalResponse extends FinancialGoalRequest {
+  id: string;
+  remainingAmount: number;
+  progressPercentage: number;
+  status: FinancialGoalStatus;
+  requiredMonthlyContribution: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type FinancialGoalContributionType = 'INITIAL' | 'CONTRIBUTION';
+
+export interface FinancialGoalContributionRequest {
+  amount: number;
+  contributionDate: string;
+  note: string | null;
+  sourceIncomeId: string | null;
+}
+
+export interface FinancialGoalContributionSourceResponse {
+  incomeId: string | null;
+  description: string;
+  incomeAmount: number;
+  transactionDate: string;
+}
+
+export interface FinancialGoalContributionResponse {
+  id: string;
+  financialGoalId: string;
+  amount: number;
+  contributionDate: string;
+  note: string | null;
+  type: FinancialGoalContributionType;
+  source: FinancialGoalContributionSourceResponse | null;
+  createdAt: string;
+}
+
+export interface CashFlowProjectionMonthResponse {
+  referenceMonth: string;
+  projectedIncome: number;
+  projectedExpenses: number;
+  projectedNet: number;
+  cumulativeBalance: number;
+}
+
+export interface CashFlowProjectionResponse {
+  referenceDate: string;
+  months: number;
+  currentRecordedBalance: number;
+  totalProjectedIncome: number;
+  totalProjectedExpenses: number;
+  projectedCumulativeBalance: number;
+  items: CashFlowProjectionMonthResponse[];
 }
 
 export interface PersonReference {
@@ -322,7 +424,10 @@ export type NotificationType =
   | 'SETTLEMENT_CONFIRMED'
   | 'SETTLEMENT_REJECTED'
   | 'BUDGET_WARNING'
-  | 'BUDGET_EXCEEDED';
+  | 'BUDGET_EXCEEDED'
+  | 'GOAL_DUE_SOON'
+  | 'GOAL_OVERDUE'
+  | 'GOAL_COMPLETED';
 
 export interface NotificationResponse {
   id: string;
@@ -339,6 +444,11 @@ export interface NotificationUnreadCountResponse {
   unreadCount: number;
 }
 
+export interface NotificationSyncResponse {
+  createdCount: number;
+  syncedAt: string;
+}
+
 export interface RecentTransaction {
   id: string;
   description: string;
@@ -347,6 +457,8 @@ export interface RecentTransaction {
   kind: 'income' | 'expense';
   category?: FinanceCategory;
   recurringTransactionId?: string | null;
+  goalAllocatedAmount?: number;
+  goalAvailableAmount?: number;
 }
 
 export interface UserDirectoryResponse {

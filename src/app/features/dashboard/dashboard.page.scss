@@ -1074,6 +1074,143 @@
   background: var(--status-negative-soft);
 }
 
+.dashboard-goal-list {
+  display: grid;
+  gap: 10px;
+}
+
+.dashboard-goal {
+  display: grid;
+  padding: 11px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  gap: 8px;
+  background: var(--background-subtle);
+  color: var(--text-primary);
+}
+
+.dashboard-goal-heading,
+.dashboard-goal-heading > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dashboard-goal-heading > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.dashboard-goal-heading strong {
+  overflow: hidden;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-goal small,
+.dashboard-goal-heading small {
+  color: var(--text-secondary);
+  font-size: 0.6rem;
+}
+
+.dashboard-goal-heading small.overdue {
+  color: var(--status-negative);
+}
+
+.dashboard-goal-track {
+  overflow: hidden;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+}
+
+.dashboard-goal-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--action-primary);
+}
+
+.dashboard-goal-track i.completed {
+  background: var(--status-positive);
+}
+
+.dashboard-goal-track i.overdue {
+  background: var(--status-negative);
+}
+
+.dashboard-projection-chart {
+  display: grid;
+  height: 150px;
+  padding: 10px 8px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.dashboard-projection-month {
+  display: grid;
+  min-width: 0;
+  grid-template-rows: minmax(0, 1fr) 23px;
+  gap: 6px;
+}
+
+.dashboard-projection-month > div {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dashboard-projection-month i {
+  display: block;
+  width: min(17px, 58%);
+  min-height: 2px;
+  border-radius: 6px 6px 2px 2px;
+  background: var(--status-positive);
+}
+
+.dashboard-projection-month i.negative {
+  background: var(--status-negative);
+}
+
+.dashboard-projection-month > span {
+  overflow: hidden;
+  color: var(--text-secondary);
+  font-size: 0.6rem;
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: capitalize;
+}
+
+.projection-callout {
+  display: flex;
+  margin-top: 17px;
+  padding: 11px 13px;
+  border-radius: 10px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  background: var(--background-subtle);
+}
+
+.projection-callout > span {
+  display: grid;
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  gap: 2px;
+}
+
+.projection-callout small {
+  font-size: 0.57rem;
+}
+
+.projection-callout strong {
+  color: var(--status-positive);
+  font-size: 0.84rem;
+}
+
 .category-list,
 .transaction-list,
 .settlement-list {
