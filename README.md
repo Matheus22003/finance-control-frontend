@@ -113,7 +113,8 @@ O workflow `.github/workflows/ci.yml` é executado em pushes e pull requests par
    auditoria do frontend;
 2. testa BFF e Debt Service com .NET SDK `10.0.301`;
 3. baixa as branches `develop` do Finance Service e da infraestrutura;
-4. executa os seis cenários E2E no stack Docker descartável. O build do Finance
+4. executa os dez cenários E2E no stack Docker descartável, incluindo fluxos
+   negativos, limites financeiros e recorrências. O build do Finance
    Service executa os testes Maven com Maven `3.9.12` e Java `21`;
 5. publica os diagnósticos por sete dias quando ocorre uma falha.
 
