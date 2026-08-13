@@ -4,10 +4,15 @@
       <h1>Finanças</h1>
       <p>Acompanhe receitas e despesas em um único lugar.</p>
     </div>
-    <button class="primary-button" type="button" (click)="openNewTransaction()">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-      Novo lançamento
-    </button>
+    <div class="page-header-actions">
+      <button class="secondary-button" type="button" (click)="openCategoryManager()">
+        Categorias
+      </button>
+      <button class="primary-button" type="button" (click)="openNewTransaction()">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        Novo lançamento
+      </button>
+    </div>
   </header>
 
   @if (successMessage()) {
@@ -30,6 +35,107 @@
     </article>
   </div>
 
+  <section class="planning-grid" aria-label="Planejamento financeiro">
+    <article class="goals-panel surface-card">
+      <header class="section-heading compact">
+        <div>
+          <span class="section-eyebrow">METAS FINANCEIRAS</span>
+          <h2>Seus próximos objetivos</h2>
+          <p>Acompanhe o valor reservado e o ritmo necessário até o prazo.</p>
+        </div>
+        <button class="compact-primary-button" type="button" (click)="openGoal()">
+          + Nova meta
+        </button>
+      </header>
+      @if (goals().length > 0) {
+        <div class="goal-list">
+          @for (goal of goals(); track goal.id) {
+            <article class="goal-item">
+              <span class="goal-item-header">
+                <span>
+                  <strong>{{ goal.name }}</strong>
+                  <small [class.overdue]="goal.status === 'OVERDUE'">
+                    {{ goalStatusLabel(goal) }} · {{ goal.targetDate | date: 'dd/MM/yyyy' }}
+                  </small>
+                </span>
+                <strong>{{ goal.progressPercentage | number: '1.0-0' }}%</strong>
+              </span>
+              <span class="goal-progress" aria-hidden="true">
+                <i
+                  [class.completed]="goal.status === 'COMPLETED'"
+                  [class.overdue]="goal.status === 'OVERDUE'"
+                  [style.width.%]="goalProgress(goal)"
+                ></i>
+              </span>
+              <span class="goal-values">
+                <small>{{ goal.currentAmount | currency: 'BRL' }} reservados</small>
+                <small>{{ goal.targetAmount | currency: 'BRL' }} de objetivo</small>
+              </span>
+              <span class="goal-item-actions">
+                <button
+                  class="goal-contribution-button"
+                  type="button"
+                  (click)="openContributions(goal)"
+                >
+                  + Registrar aporte
+                </button>
+                <button
+                  class="goal-edit-button"
+                  type="button"
+                  [attr.aria-label]="'Editar meta ' + goal.name"
+                  (click)="openGoal(goal)"
+                >
+                  Editar
+                </button>
+              </span>
+            </article>
+          }
+        </div>
+      } @else {
+        <div class="planning-empty">
+          <span aria-hidden="true">◎</span>
+          <div>
+            <strong>Transforme um plano em progresso</strong>
+            <p>Crie sua primeira meta e acompanhe quanto falta.</p>
+          </div>
+          <button type="button" (click)="openGoal()">Criar meta</button>
+        </div>
+      }
+    </article>
+
+    <article class="projection-panel surface-card">
+      <header class="section-heading compact">
+        <div>
+          <span class="section-eyebrow">PROJEÇÃO DE CAIXA</span>
+          <h2>Próximos 6 meses</h2>
+          <p>Lançamentos registrados e recorrências futuras.</p>
+        </div>
+      </header>
+      @if (cashFlowProjection(); as projection) {
+        <div class="projection-chart" aria-label="Fluxo líquido projetado por mês">
+          @for (month of projection.items; track month.referenceMonth) {
+            <div class="projection-month">
+              <div class="projection-bar-area">
+                <i
+                  [class.negative]="month.projectedNet < 0"
+                  [style.height.%]="projectionBarHeight(month.projectedNet)"
+                  [title]="month.projectedNet | currency: 'BRL'"
+                ></i>
+              </div>
+              <span>{{ projectionMonthLabel(month.referenceMonth) }}</span>
+            </div>
+          }
+        </div>
+        <div class="projection-total">
+          <span>Fluxo acumulado projetado<small>Não representa saldo bancário</small></span>
+          <strong [class.negative-value]="projection.projectedCumulativeBalance < 0">
+            {{ projection.projectedCumulativeBalance | currency: 'BRL' }}
+          </strong>
+        </div>
+      }
+    </article>
+  </section>
+
   <article class="budget-panel surface-card">
     <header class="section-heading">
       <div>
@@ -38,8 +144,12 @@
         <p>Defina limites por categoria e acompanhe o consumo no mês selecionado.</p>
       </div>
       <div class="budget-summary">
-        <span>Planejado <strong>{{ totalBudgetPlanned() | currency: 'BRL' }}</strong></span>
-        <span>Gasto <strong>{{ totalBudgetSpent() | currency: 'BRL' }}</strong></span>
+        <span
+          >Planejado <strong>{{ totalBudgetPlanned() | currency: 'BRL' }}</strong></span
+        >
+        <span
+          >Gasto <strong>{{ totalBudgetSpent() | currency: 'BRL' }}</strong></span
+        >
         <span [class.negative-value]="totalBudgetRemaining() < 0">
           Restante <strong>{{ totalBudgetRemaining() | currency: 'BRL' }}</strong>
         </span>
@@ -49,8 +159,11 @@
       @for (category of budgets(); track category.category) {
         <button class="budget-category" type="button" (click)="openBudget(category)">
           <span class="budget-category-header">
-            <strong>{{ categoryLabel(category.category) }}</strong>
-            <small>{{ category.spent | currency: 'BRL' }} / {{ category.planned | currency: 'BRL' }}</small>
+            <strong>{{ category.name }}</strong>
+            <small
+              >{{ category.spent | currency: 'BRL' }} /
+              {{ category.planned | currency: 'BRL' }}</small
+            >
           </span>
           <span class="progress-track" aria-hidden="true">
             <span
@@ -150,8 +263,8 @@
           (change)="changeCategory(categoryFilter.value)"
         >
           <option value="ALL">Todas</option>
-          @for (category of categories; track category.value) {
-            <option [value]="category.value">{{ category.label }}</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.code">{{ category.name }}</option>
           }
         </select>
       </label>
@@ -205,9 +318,17 @@
             }}</span>
             <span class="description"
               ><strong>{{ transaction.description }}</strong
-              ><small>{{
-                transaction.kind === 'income' ? 'Receita' : categoryLabel(transaction.category)
-              }} @if (transaction.recurringTransactionId) { · Recorrente }</small></span
+              ><small
+                >{{
+                  transaction.kind === 'income' ? 'Receita' : categoryLabel(transaction.category)
+                }}
+                @if (transaction.recurringTransactionId) {
+                  · Recorrente
+                }
+                @if (transaction.kind === 'income' && (transaction.goalAllocatedAmount ?? 0) > 0) {
+                  · {{ transaction.goalAllocatedAmount | currency: 'BRL' }} em metas
+                }
+              </small></span
             >
             <span class="date">{{ transaction.transactionDate | date: 'dd MMM yyyy' }}</span>
             <strong class="amount" [class.expense]="transaction.kind === 'expense'"
@@ -215,6 +336,20 @@
               {{ transaction.amount | currency: 'BRL' }}</strong
             >
             <span class="row-actions">
+              @if (transaction.kind === 'income') {
+                <button
+                  class="row-action"
+                  type="button"
+                  title="Ver distribuição em metas"
+                  [attr.aria-label]="'Ver distribuição da receita ' + transaction.description"
+                  (click)="openIncomeAllocations(transaction)"
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="12" cy="12" r="8" />
+                    <path d="M12 4v8h8M8.5 18.8 12 12" />
+                  </svg>
+                </button>
+              }
               <button
                 class="row-action"
                 type="button"
@@ -245,6 +380,205 @@
     }
   </article>
 </section>
+
+@if (isCategoryManagerOpen()) {
+  <div class="modal-backdrop" (click)="closeCategoryManager()">
+    <section
+      class="category-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="category-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header category-modal-header">
+        <div>
+          <span class="modal-eyebrow">ORGANIZAÇÃO</span>
+          <h2 id="category-dialog-title">Categorias de despesas</h2>
+          <p>Crie categorias que façam sentido para a sua rotina financeira.</p>
+        </div>
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Fechar categorias"
+          [disabled]="isCategorySaving() || !!categoryDeletingId()"
+          (click)="closeCategoryManager()"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="category-manager-layout">
+        <div class="category-manager-list">
+          <header>
+            <div>
+              <h3>Suas categorias</h3>
+              <span>{{ categories().length }} categoria(s)</span>
+            </div>
+            <button type="button" (click)="startNewCategory()">+ Nova</button>
+          </header>
+          <div class="category-list-scroll">
+            @for (category of categories(); track category.id) {
+              <article class="category-manage-row">
+                <span class="category-manage-icon">{{ category.name.slice(0, 1) }}</span>
+                <span class="category-manage-copy">
+                  <strong>{{ category.name }}</strong>
+                  <small>{{
+                    category.defaultCategory ? 'Categoria padrão' : 'Personalizada'
+                  }}</small>
+                </span>
+                @if (category.defaultCategory) {
+                  <span class="category-default-badge">Padrão</span>
+                } @else {
+                  <span class="category-manage-actions">
+                    <button
+                      type="button"
+                      [disabled]="categoryDeletingId() === category.id"
+                      [attr.aria-label]="'Renomear categoria ' + category.name"
+                      (click)="editCategory(category)"
+                    >
+                      Editar
+                    </button>
+                    <button
+                      class="danger"
+                      type="button"
+                      [disabled]="categoryDeletingId() === category.id"
+                      [attr.aria-label]="'Excluir categoria ' + category.name"
+                      (click)="deleteCategory(category)"
+                    >
+                      {{ categoryDeletingId() === category.id ? '…' : '×' }}
+                    </button>
+                  </span>
+                }
+              </article>
+            }
+          </div>
+        </div>
+
+        <form class="category-form" [formGroup]="categoryForm" (ngSubmit)="saveCategory()">
+          <span class="contribution-section-label">
+            {{ categoryEditing() ? 'RENOMEAR CATEGORIA' : 'NOVA CATEGORIA' }}
+          </span>
+          <h3>{{ categoryEditing()?.name ?? 'Categoria personalizada' }}</h3>
+          <div class="field">
+            <label for="category-name">Nome</label>
+            <input
+              id="category-name"
+              type="text"
+              maxlength="80"
+              placeholder="Ex.: Assinaturas"
+              formControlName="name"
+            />
+            @if (categoryForm.controls.name.touched && categoryForm.controls.name.invalid) {
+              <span class="field-error">Informe um nome entre 2 e 80 caracteres.</span>
+            }
+          </div>
+          <p class="category-form-hint">
+            Categorias em uso são preservadas para proteger seu histórico, orçamento e recorrências.
+          </p>
+          @if (operationError()) {
+            <div class="operation-error" role="alert">
+              <span aria-hidden="true">!</span>
+              {{ operationError() }}
+            </div>
+          }
+          <button class="primary-button" type="submit" [disabled]="isCategorySaving()">
+            @if (isCategorySaving()) {
+              <span class="button-spinner" aria-hidden="true"></span>
+              Salvando
+            } @else {
+              {{ categoryEditing() ? 'Salvar novo nome' : 'Criar categoria' }}
+            }
+          </button>
+        </form>
+      </div>
+    </section>
+  </div>
+}
+
+@if (allocationIncome(); as income) {
+  <div class="modal-backdrop" (click)="closeIncomeAllocations()">
+    <section
+      class="income-allocation-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="income-allocation-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow">DISTRIBUIÇÃO DA RECEITA</span>
+          <h2 id="income-allocation-dialog-title">{{ income.description }}</h2>
+          <p>Veja exatamente quanto desta entrada está reservado em cada meta.</p>
+        </div>
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Fechar distribuição da receita"
+          [disabled]="isIncomeAllocationLoading()"
+          (click)="closeIncomeAllocations()"
+        >
+          ×
+        </button>
+      </header>
+
+      @if (isIncomeAllocationLoading()) {
+        <div class="allocation-loading">Carregando distribuição…</div>
+      } @else if (incomeAllocationDetails(); as details) {
+        <div class="allocation-overview">
+          <span
+            >Total<strong>{{ details.incomeAmount | currency: 'BRL' }}</strong></span
+          >
+          <span
+            >Em metas<strong>{{ details.goalAllocatedAmount | currency: 'BRL' }}</strong></span
+          >
+          <span
+            >Disponível<strong>{{ details.goalAvailableAmount | currency: 'BRL' }}</strong></span
+          >
+        </div>
+        <div class="allocation-progress" aria-hidden="true">
+          <i
+            [style.width.%]="
+              details.incomeAmount > 0
+                ? (details.goalAllocatedAmount / details.incomeAmount) * 100
+                : 0
+            "
+          ></i>
+        </div>
+        @if (details.allocations.length > 0) {
+          <div class="income-allocation-list">
+            @for (allocation of details.allocations; track allocation.contributionId) {
+              <article class="income-allocation-item">
+                <span class="allocation-target-icon">◎</span>
+                <span class="allocation-item-copy">
+                  <strong>{{ allocation.financialGoalName }}</strong>
+                  <small>
+                    {{ allocation.contributionDate | date: 'dd/MM/yyyy' }}
+                    @if (allocation.note) {
+                      · {{ allocation.note }}
+                    }
+                  </small>
+                </span>
+                <strong>{{ allocation.amount | currency: 'BRL' }}</strong>
+              </article>
+            }
+          </div>
+        } @else {
+          <div class="allocation-empty">
+            <span>◎</span>
+            <strong>Nenhum valor reservado</strong>
+            <p>Esta receita ainda está totalmente disponível para uso ou para novas metas.</p>
+          </div>
+        }
+      }
+      @if (operationError()) {
+        <div class="operation-error" role="alert">
+          <span aria-hidden="true">!</span>
+          {{ operationError() }}
+        </div>
+      }
+    </section>
+  </div>
+}
 
 @if (isFormOpen()) {
   <div class="modal-backdrop" (click)="closeForm()">
@@ -359,8 +693,8 @@
           <div class="field">
             <label for="transaction-category">Categoria</label>
             <select id="transaction-category" formControlName="category">
-              @for (category of categories; track category.value) {
-                <option [value]="category.value">{{ category.label }}</option>
+              @for (category of categories(); track category.id) {
+                <option [value]="category.code">{{ category.name }}</option>
               }
             </select>
           </div>
@@ -442,10 +776,15 @@
       <header class="modal-header">
         <div>
           <span class="modal-eyebrow">ORÇAMENTO {{ selectedMonth() }}</span>
-          <h2 id="budget-dialog-title">{{ categoryLabel(budgetEditing()?.category) }}</h2>
+          <h2 id="budget-dialog-title">{{ budgetEditing()?.name }}</h2>
           <p>Informe quanto pretende gastar nessa categoria durante o mês.</p>
         </div>
-        <button class="modal-close" type="button" [disabled]="isBudgetSaving()" (click)="closeBudget()">
+        <button
+          class="modal-close"
+          type="button"
+          [disabled]="isBudgetSaving()"
+          (click)="closeBudget()"
+        >
           ×
         </button>
       </header>
@@ -483,7 +822,12 @@
               Remover limite
             </button>
           }
-          <button class="secondary-button" type="button" [disabled]="isBudgetSaving()" (click)="closeBudget()">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isBudgetSaving()"
+            (click)="closeBudget()"
+          >
             Cancelar
           </button>
           <button class="primary-button" type="submit" [disabled]="isBudgetSaving()">
@@ -491,6 +835,320 @@
           </button>
         </footer>
       </form>
+    </section>
+  </div>
+}
+
+@if (goalEditing() !== undefined) {
+  <div class="modal-backdrop" (click)="closeGoal()">
+    <section
+      class="goal-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="goal-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header">
+        <div>
+          <span class="modal-eyebrow">{{ goalEditing() ? 'EDITAR META' : 'NOVA META' }}</span>
+          <h2 id="goal-dialog-title">{{ goalEditing()?.name ?? 'Planejar um objetivo' }}</h2>
+          <p>
+            {{
+              goalEditing()
+                ? 'Edite o objetivo e o prazo. O valor reservado é controlado pelos aportes.'
+                : 'Defina o objetivo, o saldo inicial e quando pretende alcançá-lo.'
+            }}
+          </p>
+        </div>
+        <button class="modal-close" type="button" [disabled]="isGoalSaving()" (click)="closeGoal()">
+          ×
+        </button>
+      </header>
+      <form [formGroup]="goalForm" (ngSubmit)="saveGoal()" novalidate>
+        <div class="field">
+          <label for="goal-name">Nome da meta</label>
+          <input
+            id="goal-name"
+            type="text"
+            maxlength="120"
+            placeholder="Ex.: Reserva de emergência"
+            formControlName="name"
+            autofocus
+          />
+          @if (goalForm.controls.name.touched && goalForm.controls.name.invalid) {
+            <span class="field-error">Informe um nome com até 120 caracteres.</span>
+          }
+        </div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="goal-target-amount">Valor-alvo</label>
+            <div class="money-input">
+              <span>R$</span
+              ><input
+                id="goal-target-amount"
+                type="number"
+                min="0.01"
+                step="0.01"
+                formControlName="targetAmount"
+              />
+            </div>
+          </div>
+          @if (goalEditing(); as editingGoal) {
+            <div class="field">
+              <span class="field-label">Valor reservado</span>
+              <div class="goal-current-readonly">
+                <strong>{{ editingGoal.currentAmount | currency: 'BRL' }}</strong>
+                <small>Atualizado pelo histórico de aportes</small>
+              </div>
+            </div>
+          } @else {
+            <div class="field">
+              <label for="goal-current-amount">Saldo inicial</label>
+              <div class="money-input">
+                <span>R$</span
+                ><input
+                  id="goal-current-amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  formControlName="currentAmount"
+                />
+              </div>
+            </div>
+          }
+        </div>
+        <div class="field">
+          <label for="goal-target-date">Prazo</label>
+          <input id="goal-target-date" type="date" formControlName="targetDate" />
+        </div>
+        @if (operationError()) {
+          <div class="operation-error" role="alert">{{ operationError() }}</div>
+        }
+        <footer class="modal-actions goal-actions">
+          @if (goalEditing()) {
+            <button
+              class="danger-link"
+              type="button"
+              [disabled]="isGoalSaving()"
+              (click)="deleteGoal()"
+            >
+              Excluir meta
+            </button>
+          }
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isGoalSaving()"
+            (click)="closeGoal()"
+          >
+            Cancelar
+          </button>
+          <button
+            class="primary-button"
+            type="submit"
+            [disabled]="isGoalSaving() || goalForm.invalid"
+          >
+            {{ isGoalSaving() ? 'Salvando…' : 'Salvar meta' }}
+          </button>
+        </footer>
+      </form>
+    </section>
+  </div>
+}
+
+@if (contributionGoal(); as goal) {
+  <div class="modal-backdrop" (click)="closeContributions()">
+    <section
+      class="contribution-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="contribution-dialog-title"
+      (click)="$event.stopPropagation()"
+    >
+      <header class="modal-header contribution-header">
+        <div>
+          <span class="modal-eyebrow">HISTÓRICO DE APORTES</span>
+          <h2 id="contribution-dialog-title">{{ goal.name }}</h2>
+          <p>Registre cada valor reservado e acompanhe como a meta evoluiu.</p>
+        </div>
+        <button
+          class="modal-close"
+          type="button"
+          [disabled]="isContributionSaving() || !!contributionDeletingId()"
+          (click)="closeContributions()"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="contribution-overview">
+        <span>
+          Reservado
+          <strong>{{ goal.currentAmount | currency: 'BRL' }}</strong>
+        </span>
+        <span>
+          Objetivo
+          <strong>{{ goal.targetAmount | currency: 'BRL' }}</strong>
+        </span>
+        <span>
+          Progresso
+          <strong>{{ goal.progressPercentage | number: '1.0-0' }}%</strong>
+        </span>
+      </div>
+
+      <div class="contribution-progress" aria-hidden="true">
+        <i [style.width.%]="goalProgress(goal)"></i>
+      </div>
+
+      <div class="contribution-layout">
+        <form
+          class="contribution-form"
+          [formGroup]="contributionForm"
+          (ngSubmit)="saveContribution()"
+          novalidate
+        >
+          <div>
+            <span class="contribution-section-label">NOVO APORTE</span>
+            <h3>Adicionar ao objetivo</h3>
+          </div>
+          <div class="field">
+            <label for="contribution-amount">Valor</label>
+            <div class="money-input">
+              <span>R$</span>
+              <input
+                id="contribution-amount"
+                type="number"
+                min="0.01"
+                [attr.max]="selectedContributionIncome()?.goalAvailableAmount ?? null"
+                step="0.01"
+                formControlName="amount"
+              />
+            </div>
+            @if (
+              contributionForm.controls.amount.touched && contributionForm.controls.amount.invalid
+            ) {
+              <span class="field-error">Informe um valor maior que zero.</span>
+            } @else if (contributionExceedsAvailable()) {
+              <span class="field-error"> O aporte supera o valor disponível dessa receita. </span>
+            }
+          </div>
+          <div class="field">
+            <label for="contribution-date">Data</label>
+            <input
+              id="contribution-date"
+              type="date"
+              [max]="todayValue"
+              formControlName="contributionDate"
+            />
+          </div>
+          <div class="field">
+            <label for="contribution-source-income">
+              Receita de origem <small>opcional</small>
+            </label>
+            <select id="contribution-source-income" formControlName="sourceIncomeId">
+              <option value="">Aporte manual (sem vínculo)</option>
+              @for (income of contributionIncomeOptions(); track income.id) {
+                <option [value]="income.id" [disabled]="income.goalAvailableAmount <= 0">
+                  {{ income.description }} — disponível
+                  {{ income.goalAvailableAmount | currency: 'BRL' }} ·
+                  {{ income.transactionDate | date: 'dd/MM/yyyy' }}
+                </option>
+              }
+            </select>
+            @if (selectedContributionIncome(); as sourceIncome) {
+              <small class="field-hint allocation-hint">
+                {{ sourceIncome.goalAllocatedAmount | currency: 'BRL' }} já reservado ·
+                {{ sourceIncome.goalAvailableAmount | currency: 'BRL' }} disponível de
+                {{ sourceIncome.amount | currency: 'BRL' }}
+              </small>
+            } @else {
+              <small class="field-hint">
+                O vínculo registra de qual receita esse valor foi reservado.
+              </small>
+            }
+          </div>
+          <div class="field">
+            <label for="contribution-note">Observação <small>opcional</small></label>
+            <input
+              id="contribution-note"
+              type="text"
+              maxlength="200"
+              placeholder="Ex.: Economia do mês"
+              formControlName="note"
+            />
+          </div>
+          <button
+            class="primary-button contribution-submit"
+            type="submit"
+            [disabled]="
+              isContributionSaving() || contributionForm.invalid || contributionExceedsAvailable()
+            "
+          >
+            {{ isContributionSaving() ? 'Registrando…' : 'Registrar aporte' }}
+          </button>
+        </form>
+
+        <section class="contribution-history" aria-label="Histórico da meta">
+          <header>
+            <div>
+              <span class="contribution-section-label">MOVIMENTAÇÕES</span>
+              <h3>Histórico da meta</h3>
+            </div>
+            <span>{{ goalContributions().length }} registro(s)</span>
+          </header>
+
+          @if (isContributionLoading()) {
+            <div class="contribution-empty">Carregando histórico…</div>
+          } @else if (goalContributions().length > 0) {
+            <div class="contribution-list">
+              @for (contribution of goalContributions(); track contribution.id) {
+                <article class="contribution-item">
+                  <span class="contribution-icon" [class.initial]="contribution.type === 'INITIAL'">
+                    {{ contribution.type === 'INITIAL' ? 'SI' : '+' }}
+                  </span>
+                  <span class="contribution-copy">
+                    <strong>{{ contributionTypeLabel(contribution) }}</strong>
+                    <small>
+                      {{ contribution.contributionDate | date: 'dd/MM/yyyy' }}
+                      @if (contribution.note) {
+                        · {{ contribution.note }}
+                      }
+                    </small>
+                    @if (contribution.source; as source) {
+                      <small class="contribution-source">
+                        Origem: {{ source.description }} ·
+                        {{ source.incomeAmount | currency: 'BRL' }} ·
+                        {{ source.transactionDate | date: 'dd/MM/yyyy' }}
+                        @if (!source.incomeId) {
+                          · receita removida
+                        }
+                      </small>
+                    }
+                  </span>
+                  <strong>{{ contribution.amount | currency: 'BRL' }}</strong>
+                  <button
+                    class="contribution-delete"
+                    type="button"
+                    [disabled]="contributionDeletingId() === contribution.id"
+                    [attr.aria-label]="
+                      'Remover aporte de ' + (contribution.amount | currency: 'BRL')
+                    "
+                    (click)="deleteContribution(contribution)"
+                  >
+                    {{ contributionDeletingId() === contribution.id ? '…' : '×' }}
+                  </button>
+                </article>
+              }
+            </div>
+          } @else {
+            <div class="contribution-empty">Nenhum aporte registrado ainda.</div>
+          }
+        </section>
+      </div>
+
+      @if (operationError()) {
+        <div class="operation-error contribution-error" role="alert">{{ operationError() }}</div>
+      }
     </section>
   </div>
 }

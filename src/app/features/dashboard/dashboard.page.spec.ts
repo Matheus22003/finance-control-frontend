@@ -68,6 +68,16 @@ describe('DashboardPage', () => {
       },
       monthlyTrend: [],
       budgetAlerts: [],
+      goals: [],
+      cashFlowProjection: {
+        referenceDate: '2026-08-10',
+        months: 6,
+        currentRecordedBalance: 1000,
+        totalProjectedIncome: 0,
+        totalProjectedExpenses: 0,
+        projectedCumulativeBalance: 0,
+        items: [],
+      },
     },
     currentUser: {
       id: 'demo-user-id',

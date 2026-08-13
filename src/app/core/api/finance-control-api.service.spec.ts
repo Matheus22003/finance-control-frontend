@@ -20,8 +20,10 @@ describe('FinanceControlApiService', () => {
 
   it('builds the dashboard using only BFF endpoints', () => {
     let resultDescription = '';
+    let resultCategoryName = '';
     service.getDashboard().subscribe((result) => {
       resultDescription = result.recentTransactions[0]?.description ?? '';
+      resultCategoryName = result.categoryTotals[0]?.name ?? '';
     });
 
     httpTesting.expectOne('/api/v1/dashboard').flush({
@@ -38,6 +40,16 @@ describe('FinanceControlApiService', () => {
       },
       monthlyTrend: [],
       budgetAlerts: [],
+      goals: [],
+      cashFlowProjection: {
+        referenceDate: '2026-08-10',
+        months: 6,
+        currentRecordedBalance: 750,
+        totalProjectedIncome: 0,
+        totalProjectedExpenses: 0,
+        projectedCumulativeBalance: 0,
+        items: [],
+      },
     });
     httpTesting.expectOne('/api/v1/users/me').flush({
       id: 'user-id',
@@ -54,7 +66,25 @@ describe('FinanceControlApiService', () => {
         updatedAt: '2026-08-01T12:00:00Z',
       },
     ]);
-    httpTesting.expectOne('/api/v1/finance/expenses').flush([]);
+    httpTesting.expectOne('/api/v1/finance/expenses').flush([
+      {
+        id: 'expense-id',
+        description: 'Streaming',
+        amount: 250,
+        transactionDate: '2026-07-31',
+        category: 'CUSTOM_SUBSCRIPTIONS',
+        createdAt: '2026-07-31T12:00:00Z',
+        updatedAt: '2026-07-31T12:00:00Z',
+      },
+    ]);
+    httpTesting.expectOne('/api/v1/finance/categories').flush([
+      {
+        id: 'category-id',
+        code: 'CUSTOM_SUBSCRIPTIONS',
+        name: 'Assinaturas',
+        defaultCategory: false,
+      },
+    ]);
     httpTesting.expectOne('/api/v1/debts').flush([]);
     httpTesting.expectOne('/api/v1/debts/payments/pending-confirmation').flush([]);
     httpTesting
@@ -68,6 +98,7 @@ describe('FinanceControlApiService', () => {
     });
 
     expect(resultDescription).toBe('Salário');
+    expect(resultCategoryName).toBe('Assinaturas');
   });
 
   it('sends finance mutations only through versioned BFF endpoints', () => {
@@ -267,6 +298,12 @@ describe('FinanceControlApiService', () => {
   });
 
   it('uses only protected BFF endpoints for the notification center', () => {
+    service.syncNotificationAlerts().subscribe();
+    const sync = httpTesting.expectOne('/api/v1/notifications/sync');
+    expect(sync.request.method).toBe('POST');
+    expect(sync.request.body).toBeNull();
+    sync.flush({ createdCount: 0, syncedAt: '2026-08-10T12:00:00Z' });
+
     service.getNotifications(true, 20).subscribe();
     const list = httpTesting.expectOne(
       (request) =>
@@ -325,5 +362,85 @@ describe('FinanceControlApiService', () => {
       answer: 'Ana ainda deve R$ 50,00.',
       suggestedQuestions: [],
     });
+  });
+
+  it('manages goals and projections only through protected BFF endpoints', () => {
+    const goal = {
+      name: 'Reserva',
+      targetAmount: 10000,
+      currentAmount: 2500,
+      targetDate: '2027-02-10',
+    };
+
+    service.getFinancialGoals().subscribe();
+    const list = httpTesting.expectOne('/api/v1/finance/goals');
+    expect(list.request.method).toBe('GET');
+    list.flush([]);
+
+    service.getFinancialGoal('goal-id').subscribe();
+    const detail = httpTesting.expectOne('/api/v1/finance/goals/goal-id');
+    expect(detail.request.method).toBe('GET');
+    detail.flush({ id: 'goal-id', ...goal });
+
+    service.createFinancialGoal(goal).subscribe();
+    const create = httpTesting.expectOne('/api/v1/finance/goals');
+    expect(create.request.method).toBe('POST');
+    expect(create.request.body).toEqual(goal);
+    create.flush({ id: 'goal-id', ...goal });
+
+    service.updateFinancialGoal('goal-id', goal).subscribe();
+    const update = httpTesting.expectOne('/api/v1/finance/goals/goal-id');
+    expect(update.request.method).toBe('PUT');
+    update.flush({ id: 'goal-id', ...goal });
+
+    service.deleteFinancialGoal('goal-id').subscribe();
+    const remove = httpTesting.expectOne('/api/v1/finance/goals/goal-id');
+    expect(remove.request.method).toBe('DELETE');
+    remove.flush(null);
+
+    service.getFinancialGoalContributions('goal-id').subscribe();
+    const contributionList = httpTesting.expectOne('/api/v1/finance/goals/goal-id/contributions');
+    expect(contributionList.request.method).toBe('GET');
+    contributionList.flush([]);
+
+    const contribution = {
+      amount: 500,
+      contributionDate: '2026-08-11',
+      note: 'Economia do mês',
+      sourceIncomeId: 'income-id',
+    };
+    service.createFinancialGoalContribution('goal-id', contribution).subscribe();
+    const createContribution = httpTesting.expectOne('/api/v1/finance/goals/goal-id/contributions');
+    expect(createContribution.request.method).toBe('POST');
+    expect(createContribution.request.body).toEqual(contribution);
+    createContribution.flush({
+      id: 'contribution-id',
+      financialGoalId: 'goal-id',
+      amount: contribution.amount,
+      contributionDate: contribution.contributionDate,
+      note: contribution.note,
+      source: {
+        incomeId: contribution.sourceIncomeId,
+        description: 'Salário mensal',
+        incomeAmount: 8000,
+        transactionDate: '2026-08-05',
+      },
+    });
+
+    service.deleteFinancialGoalContribution('goal-id', 'contribution-id').subscribe();
+    const deleteContribution = httpTesting.expectOne(
+      '/api/v1/finance/goals/goal-id/contributions/contribution-id',
+    );
+    expect(deleteContribution.request.method).toBe('DELETE');
+    deleteContribution.flush(null);
+
+    service.getCashFlowProjection(6).subscribe();
+    const projection = httpTesting.expectOne(
+      (request) =>
+        request.url === '/api/v1/finance/projections/cash-flow' &&
+        request.params.get('months') === '6',
+    );
+    expect(projection.request.method).toBe('GET');
+    projection.flush({ items: [] });
   });
 });

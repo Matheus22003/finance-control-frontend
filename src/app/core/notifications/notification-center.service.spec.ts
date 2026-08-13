@@ -21,6 +21,7 @@ describe('NotificationCenterService', () => {
   const api = {
     getNotifications: vi.fn(() => of([notification])),
     getUnreadNotificationCount: vi.fn(() => of({ unreadCount: 1 })),
+    syncNotificationAlerts: vi.fn(() => of({ createdCount: 1, syncedAt: '2026-08-03T12:00:00Z' })),
     markNotificationAsRead: vi.fn(() =>
       of({ ...notification, isRead: true, readAt: '2026-08-03T12:01:00Z' }),
     ),
@@ -64,5 +65,15 @@ describe('NotificationCenterService', () => {
 
     expect(api.markAllNotificationsAsRead).toHaveBeenCalled();
     expect(service.unreadCount()).toBe(0);
+  });
+
+  it('synchronizes server-side alerts and refreshes the persistent inbox', () => {
+    const service = TestBed.inject(NotificationCenterService);
+
+    service.synchronizeAlerts();
+
+    expect(api.syncNotificationAlerts).toHaveBeenCalledOnce();
+    expect(api.getNotifications).toHaveBeenCalledOnce();
+    expect(service.notifications()).toEqual([notification]);
   });
 });

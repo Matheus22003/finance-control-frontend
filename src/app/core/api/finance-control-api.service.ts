@@ -15,10 +15,18 @@ import {
   ExpenseRequest,
   ExpenseResponse,
   FinanceCategory,
+  FinanceCategoryRequest,
+  FinanceCategoryResponse,
+  FinancialGoalRequest,
+  FinancialGoalResponse,
+  FinancialGoalContributionRequest,
+  FinancialGoalContributionResponse,
   FinanceTransactionFilters,
   IncomeRequest,
   IncomeResponse,
+  IncomeGoalAllocationResponse,
   MonthlyBudgetResponse,
+  CashFlowProjectionResponse,
   RecurringTransactionRequest,
   RecurringTransactionResponse,
   UpdateRecurringTransactionRequest,
@@ -28,6 +36,7 @@ import {
   PaymentResponse,
   RecordSettlementTransferRequest,
   NotificationResponse,
+  NotificationSyncResponse,
   NotificationUnreadCountResponse,
   RecentTransaction,
   SettlementTransferResponse,
@@ -44,6 +53,7 @@ import {
 
 export interface CategoryTotal {
   category: FinanceCategory;
+  name: string;
   amount: number;
   percentage: number;
 }
@@ -69,6 +79,7 @@ export class FinanceControlApiService {
       currentUser: this.getCurrentUser(),
       incomes: this.getIncomes(),
       expenses: this.getExpenses(),
+      categories: this.getFinanceCategories(),
       debts: this.getDebts(),
       pendingConfirmations: this.getPendingPaymentConfirmations(),
       pendingSettlementConfirmations: this.getPendingSettlementTransferConfirmations(),
@@ -80,6 +91,7 @@ export class FinanceControlApiService {
           currentUser,
           incomes,
           expenses,
+          categories,
           debts,
           pendingConfirmations,
           pendingSettlementConfirmations,
@@ -88,7 +100,7 @@ export class FinanceControlApiService {
           summary,
           currentUser,
           recentTransactions: this.buildRecentTransactions(incomes, expenses),
-          categoryTotals: this.buildCategoryTotals(expenses),
+          categoryTotals: this.buildCategoryTotals(expenses, categories),
           debts,
           pendingConfirmations,
           pendingSettlementConfirmations,
@@ -114,6 +126,31 @@ export class FinanceControlApiService {
     });
   }
 
+  getFinanceCategories(): Observable<FinanceCategoryResponse[]> {
+    return this.http.get<FinanceCategoryResponse[]>('/api/v1/finance/categories');
+  }
+
+  createFinanceCategory(request: FinanceCategoryRequest): Observable<FinanceCategoryResponse> {
+    return this.http.post<FinanceCategoryResponse>('/api/v1/finance/categories', request);
+  }
+
+  updateFinanceCategory(
+    id: number,
+    request: FinanceCategoryRequest,
+  ): Observable<FinanceCategoryResponse> {
+    return this.http.put<FinanceCategoryResponse>(`/api/v1/finance/categories/${id}`, request);
+  }
+
+  deleteFinanceCategory(id: number): Observable<void> {
+    return this.http.delete<void>(`/api/v1/finance/categories/${id}`);
+  }
+
+  getIncomeGoalAllocations(id: string): Observable<IncomeGoalAllocationResponse> {
+    return this.http.get<IncomeGoalAllocationResponse>(
+      `/api/v1/finance/incomes/${id}/goal-allocations`,
+    );
+  }
+
   getNotifications(unreadOnly = false, limit = 30): Observable<NotificationResponse[]> {
     return this.http.get<NotificationResponse[]>('/api/v1/notifications', {
       params: { unreadOnly, limit },
@@ -122,6 +159,10 @@ export class FinanceControlApiService {
 
   getUnreadNotificationCount(): Observable<NotificationUnreadCountResponse> {
     return this.http.get<NotificationUnreadCountResponse>('/api/v1/notifications/unread-count');
+  }
+
+  syncNotificationAlerts(): Observable<NotificationSyncResponse> {
+    return this.http.post<NotificationSyncResponse>('/api/v1/notifications/sync', null);
   }
 
   markNotificationAsRead(notificationId: string): Observable<NotificationResponse> {
@@ -147,6 +188,57 @@ export class FinanceControlApiService {
     return this.http.delete<void>(`/api/v1/finance/incomes/${id}`);
   }
 
+  getFinancialGoals(): Observable<FinancialGoalResponse[]> {
+    return this.http.get<FinancialGoalResponse[]>('/api/v1/finance/goals');
+  }
+
+  getFinancialGoal(id: string): Observable<FinancialGoalResponse> {
+    return this.http.get<FinancialGoalResponse>(`/api/v1/finance/goals/${id}`);
+  }
+
+  createFinancialGoal(request: FinancialGoalRequest): Observable<FinancialGoalResponse> {
+    return this.http.post<FinancialGoalResponse>('/api/v1/finance/goals', request);
+  }
+
+  updateFinancialGoal(
+    id: string,
+    request: FinancialGoalRequest,
+  ): Observable<FinancialGoalResponse> {
+    return this.http.put<FinancialGoalResponse>(`/api/v1/finance/goals/${id}`, request);
+  }
+
+  deleteFinancialGoal(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/v1/finance/goals/${id}`);
+  }
+
+  getFinancialGoalContributions(goalId: string): Observable<FinancialGoalContributionResponse[]> {
+    return this.http.get<FinancialGoalContributionResponse[]>(
+      `/api/v1/finance/goals/${goalId}/contributions`,
+    );
+  }
+
+  createFinancialGoalContribution(
+    goalId: string,
+    request: FinancialGoalContributionRequest,
+  ): Observable<FinancialGoalContributionResponse> {
+    return this.http.post<FinancialGoalContributionResponse>(
+      `/api/v1/finance/goals/${goalId}/contributions`,
+      request,
+    );
+  }
+
+  deleteFinancialGoalContribution(goalId: string, contributionId: string): Observable<void> {
+    return this.http.delete<void>(
+      `/api/v1/finance/goals/${goalId}/contributions/${contributionId}`,
+    );
+  }
+
+  getCashFlowProjection(months = 6): Observable<CashFlowProjectionResponse> {
+    return this.http.get<CashFlowProjectionResponse>('/api/v1/finance/projections/cash-flow', {
+      params: { months },
+    });
+  }
+
   getExpenses(filters: FinanceTransactionFilters = {}): Observable<ExpenseResponse[]> {
     return this.http.get<ExpenseResponse[]>('/api/v1/finance/expenses', {
       params: this.financeFilterParams(filters, true),
@@ -166,9 +258,7 @@ export class FinanceControlApiService {
   }
 
   getRecurringTransactions(): Observable<RecurringTransactionResponse[]> {
-    return this.http.get<RecurringTransactionResponse[]>(
-      '/api/v1/finance/recurring-transactions',
-    );
+    return this.http.get<RecurringTransactionResponse[]>('/api/v1/finance/recurring-transactions');
   }
 
   createRecurringTransaction(
@@ -205,15 +295,16 @@ export class FinanceControlApiService {
     category: FinanceCategory,
     amount: number,
   ): Observable<MonthlyBudgetResponse> {
-    return this.http.put<MonthlyBudgetResponse>(`/api/v1/finance/budgets/${category}`, { amount }, {
-      params: { month },
-    });
+    return this.http.put<MonthlyBudgetResponse>(
+      `/api/v1/finance/budgets/${category}`,
+      { amount },
+      {
+        params: { month },
+      },
+    );
   }
 
-  deleteMonthlyBudget(
-    month: string,
-    category: FinanceCategory,
-  ): Observable<MonthlyBudgetResponse> {
+  deleteMonthlyBudget(month: string, category: FinanceCategory): Observable<MonthlyBudgetResponse> {
     return this.http.delete<MonthlyBudgetResponse>(`/api/v1/finance/budgets/${category}`, {
       params: { month },
     });
@@ -461,9 +552,13 @@ export class FinanceControlApiService {
       .slice(0, 6);
   }
 
-  private buildCategoryTotals(expenses: ExpenseResponse[]): CategoryTotal[] {
+  private buildCategoryTotals(
+    expenses: ExpenseResponse[],
+    categories: FinanceCategoryResponse[],
+  ): CategoryTotal[] {
     const totalExpenses = expenses.reduce((total, expense) => total + expense.amount, 0);
     const groupedExpenses = new Map<FinanceCategory, number>();
+    const categoryNames = new Map(categories.map((category) => [category.code, category.name]));
 
     for (const expense of expenses) {
       groupedExpenses.set(
@@ -475,6 +570,7 @@ export class FinanceControlApiService {
     return [...groupedExpenses.entries()]
       .map(([category, amount]) => ({
         category,
+        name: categoryNames.get(category) ?? category,
         amount,
         percentage: totalExpenses > 0 ? amount / totalExpenses : 0,
       }))

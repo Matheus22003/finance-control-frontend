@@ -13,23 +13,16 @@ import {
 import {
   AiAnalysisResponse,
   BudgetCategoryResponse,
+  CashFlowProjectionMonthResponse,
   DebtResponse,
   FinanceCategory,
   FinanceTrendMonth,
+  FinancialGoalResponse,
   PaymentResponse,
   SettlementTransferResponse,
 } from '../../core/api/api.models';
 import { DebtNotificationsService } from '../../core/debts/debt-notifications.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
-
-const CATEGORY_LABELS: Record<FinanceCategory, string> = {
-  FOOD: 'Alimentação',
-  TRANSPORT: 'Transporte',
-  RENT: 'Moradia',
-  LEISURE: 'Lazer',
-  HEALTH: 'Saúde',
-  OTHER: 'Outros',
-};
 
 const CATEGORY_ICONS: Record<FinanceCategory, string> = {
   FOOD: 'FO',
@@ -75,6 +68,7 @@ export class DashboardPage {
     'Quem ainda me deve dinheiro?',
     'De onde acumulei minhas dívidas?',
     'Quanto gastei com alimentação?',
+    'Consigo atingir minha meta?',
   ]);
   protected readonly referenceMonthValue = `${new Date().getFullYear()}-${String(
     new Date().getMonth() + 1,
@@ -128,12 +122,11 @@ export class DashboardPage {
       });
   }
 
-  protected categoryLabel(category: FinanceCategory): string {
-    return CATEGORY_LABELS[category];
-  }
-
-  protected categoryIcon(category: FinanceCategory): string {
-    return CATEGORY_ICONS[category];
+  protected categoryIcon(category: FinanceCategory, name?: string): string {
+    return (
+      CATEGORY_ICONS[category] ??
+      (name ?? category.replace(/^CUSTOM_/, '')).slice(0, 2).toLocaleUpperCase('pt-BR')
+    );
   }
 
   protected categoryBarWidth(category: CategoryTotal): number {
@@ -159,6 +152,22 @@ export class DashboardPage {
 
   protected budgetBarWidth(category: BudgetCategoryResponse): number {
     return Math.min(Math.max(category.usagePercentage, category.spent > 0 ? 3 : 0), 100);
+  }
+
+  protected goalProgress(goal: FinancialGoalResponse): number {
+    return Math.min(Math.max(goal.progressPercentage, 0), 100);
+  }
+
+  protected goalStatusLabel(goal: FinancialGoalResponse): string {
+    return { ACTIVE: 'Em andamento', COMPLETED: 'Concluída', OVERDUE: 'Prazo vencido' }[
+      goal.status
+    ];
+  }
+
+  protected projectionBarHeight(item: CashFlowProjectionMonthResponse): number {
+    const projection = this.data()?.summary.cashFlowProjection.items ?? [];
+    const maximum = Math.max(1, ...projection.map((month) => Math.abs(month.projectedNet)));
+    return Math.max((Math.abs(item.projectedNet) / maximum) * 100, item.projectedNet !== 0 ? 4 : 0);
   }
 
   protected debtDescription(payment: PaymentResponse): string {

@@ -1,0 +1,163 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      bff_ref:
+        description: Referência do BFF
+        required: true
+        default: develop
+        type: string
+      finance_service_ref:
+        description: Referência do Finance Service
+        required: true
+        default: develop
+        type: string
+      debt_service_ref:
+        description: Referência do Debt Service
+        required: true
+        default: develop
+        type: string
+      infra_ref:
+        description: Referência da infraestrutura
+        required: true
+        default: develop
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 26.4.0
+  DOTNET_VERSION: 10.0.301
+
+jobs:
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
+
+      - name: Executar testes unitários
+        run: npm test
+
+      - name: Compilar aplicação
+        run: npm run build
+
+      - name: Auditar dependências
+        run: npm audit --audit-level=high
+
+  full-stack:
+    name: Serviços e E2E isolado
+    needs: frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout do frontend
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: workspace/finance-control-frontend
+          persist-credentials: false
+
+      - name: Checkout do BFF
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Matheus22003/finance-control-bff
+          ref: ${{ inputs.bff_ref || 'develop' }}
+          path: workspace/finance-control-bff
+          persist-credentials: false
+
+      - name: Checkout do Finance Service
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Matheus22003/finance-control-finance-service
+          ref: ${{ inputs.finance_service_ref || 'develop' }}
+          path: workspace/finance-control-finance-service
+          persist-credentials: false
+
+      - name: Checkout do Debt Service
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Matheus22003/finance-control-debt-service
+          ref: ${{ inputs.debt_service_ref || 'develop' }}
+          path: workspace/finance-control-debt-service
+          persist-credentials: false
+
+      - name: Checkout da infraestrutura
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: Matheus22003/finance-control-infra
+          ref: ${{ inputs.infra_ref || 'develop' }}
+          path: workspace/finance-control-infra
+          persist-credentials: false
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: workspace/finance-control-frontend/package-lock.json
+
+      - name: Configurar .NET
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Testar BFF
+        working-directory: workspace/finance-control-bff
+        run: |
+          dotnet restore FinanceControl.Bff.sln --locked-mode
+          dotnet test FinanceControl.Bff.sln --configuration Release --no-restore
+
+      - name: Testar Debt Service
+        working-directory: workspace/finance-control-debt-service/FinanceControl.DebtService
+        run: |
+          dotnet restore FinanceControl.DebtService.sln --locked-mode
+          dotnet test FinanceControl.DebtService.sln --configuration Release --no-restore
+
+      - name: Instalar dependências do frontend
+        working-directory: workspace/finance-control-frontend
+        run: npm ci --ignore-scripts
+
+      - name: Instalar Chromium do Playwright
+        working-directory: workspace/finance-control-frontend
+        run: npm exec playwright install --with-deps chromium
+
+      - name: Executar E2E no stack descartável
+        working-directory: workspace/finance-control-frontend
+        run: npm run test:e2e:isolated
+
+      - name: Publicar diagnóstico da falha
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: e2e-diagnostics-${{ github.run_id }}
+          path: |
+            workspace/finance-control-frontend/test-results
+            workspace/finance-control-frontend/playwright-report
+          if-no-files-found: warn
+          retention-days: 7

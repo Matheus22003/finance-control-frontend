@@ -130,7 +130,10 @@
             @for (insight of analysis.financeInsights; track insight.title) {
               <div class="ai-insight" [class]="'ai-insight ' + insight.severity.toLowerCase()">
                 <i aria-hidden="true"></i>
-                <span><strong>{{ insight.title }}</strong><small>{{ insight.description }}</small></span>
+                <span
+                  ><strong>{{ insight.title }}</strong
+                  ><small>{{ insight.description }}</small></span
+                >
               </div>
             }
           </article>
@@ -139,7 +142,10 @@
             @for (insight of analysis.debtInsights; track insight.title) {
               <div class="ai-insight" [class]="'ai-insight ' + insight.severity.toLowerCase()">
                 <i aria-hidden="true"></i>
-                <span><strong>{{ insight.title }}</strong><small>{{ insight.description }}</small></span>
+                <span
+                  ><strong>{{ insight.title }}</strong
+                  ><small>{{ insight.description }}</small></span
+                >
               </div>
             }
           </article>
@@ -159,7 +165,10 @@
       } @else {
         <div class="ai-empty">
           <span aria-hidden="true">◎</span>
-          <p>A análise cruza seu fluxo mensal, categorias, dívidas, vencimentos e pagamentos simplificados.</p>
+          <p>
+            A análise cruza seu fluxo mensal, categorias, dívidas, vencimentos e pagamentos
+            simplificados.
+          </p>
         </div>
       }
 
@@ -227,7 +236,8 @@
           </button>
         </form>
         <small class="question-disclaimer">
-          O chat não é salvo. Quando necessário, o Groq recebe aliases e valores; nomes reais permanecem no BFF.
+          O chat não é salvo. Quando necessário, o Groq recebe aliases e valores; nomes reais
+          permanecem no BFF.
         </small>
       </section>
     </section>
@@ -241,7 +251,8 @@
             <p>Revise pagamentos registrados pela outra pessoa.</p>
           </div>
           @if (
-            dashboard.pendingConfirmations.length + dashboard.pendingSettlementConfirmations.length >
+            dashboard.pendingConfirmations.length +
+              dashboard.pendingSettlementConfirmations.length >
             0
           ) {
             <span class="pending-count">{{
@@ -435,7 +446,10 @@
           </div>
           <span class="trend-legend"><i></i>Receitas <i></i>Despesas</span>
         </header>
-        <div class="trend-chart" aria-label="Evolução de receitas e despesas nos últimos seis meses">
+        <div
+          class="trend-chart"
+          aria-label="Evolução de receitas e despesas nos últimos seis meses"
+        >
           @for (month of dashboard.summary.monthlyTrend; track month.referenceMonth) {
             <div class="trend-month">
               <div class="trend-bars">
@@ -461,7 +475,8 @@
               dashboard.summary.monthlyTrend.at(-1)?.balance &&
               dashboard.summary.monthlyTrend.at(-1)!.balance < 0
             "
-          >{{ dashboard.summary.monthlyTrend.at(-1)?.balance ?? 0 | currency: 'BRL' }}</strong>
+            >{{ dashboard.summary.monthlyTrend.at(-1)?.balance ?? 0 | currency: 'BRL' }}</strong
+          >
         </div>
       </article>
 
@@ -473,7 +488,7 @@
           </div>
           <a routerLink="/finance">Ajustar</a>
         </header>
-        @if (dashboard.summary.budget.categories.length > 0) {
+        @if (dashboard.summary.budget.totalPlanned > 0) {
           <div class="budget-overview">
             <div>
               <span>Consumido</span>
@@ -489,7 +504,7 @@
               @if (category.planned > 0) {
                 <div class="budget-item" [class.critical]="category.usagePercentage >= 100">
                   <span>
-                    <strong>{{ categoryLabel(category.category) }}</strong>
+                    <strong>{{ category.name }}</strong>
                     <small>{{ category.usagePercentage | number: '1.0-0' }}%</small>
                   </span>
                   <div class="budget-track">
@@ -503,7 +518,7 @@
             <div class="budget-alerts">
               @for (alert of dashboard.summary.budgetAlerts; track alert.category) {
                 <p [class.critical]="alert.severity === 'CRITICAL'">
-                  <strong>{{ categoryLabel(alert.category) }}</strong>
+                  <strong>{{ alert.name }}</strong>
                   {{ alert.severity === 'CRITICAL' ? 'excedeu o limite' : 'está perto do limite' }}
                 </p>
               }
@@ -518,6 +533,89 @@
         }
       </article>
 
+      <article class="surface-card dashboard-goals-card">
+        <header class="card-header">
+          <div>
+            <h2>Metas financeiras</h2>
+            <p>Progresso dos seus próximos objetivos</p>
+          </div>
+          <a routerLink="/finance">Gerenciar</a>
+        </header>
+        @if (dashboard.summary.goals.length > 0) {
+          <div class="dashboard-goal-list">
+            @for (goal of dashboard.summary.goals; track goal.id) {
+              <a class="dashboard-goal" routerLink="/finance">
+                <span class="dashboard-goal-heading">
+                  <span
+                    ><strong>{{ goal.name }}</strong
+                    ><small [class.overdue]="goal.status === 'OVERDUE'"
+                      >{{ goalStatusLabel(goal) }} ·
+                      {{ goal.targetDate | date: 'dd/MM/yyyy' }}</small
+                    ></span
+                  >
+                  <strong>{{ goal.progressPercentage | number: '1.0-0' }}%</strong>
+                </span>
+                <span class="dashboard-goal-track"
+                  ><i
+                    [class.completed]="goal.status === 'COMPLETED'"
+                    [class.overdue]="goal.status === 'OVERDUE'"
+                    [style.width.%]="goalProgress(goal)"
+                  ></i
+                ></span>
+                <small
+                  >{{ goal.currentAmount | currency: 'BRL' }} de
+                  {{ goal.targetAmount | currency: 'BRL' }}</small
+                >
+              </a>
+            }
+          </div>
+        } @else {
+          <div class="compact-empty">
+            <span>◎</span>
+            <p>Crie uma meta para acompanhar seus objetivos financeiros.</p>
+            <a routerLink="/finance">Criar primeira meta</a>
+          </div>
+        }
+      </article>
+
+      <article class="surface-card dashboard-projection-card">
+        <header class="card-header">
+          <div>
+            <h2>Projeção de caixa</h2>
+            <p>Fluxo líquido previsto para 6 meses</p>
+          </div>
+          <span class="period-badge">Recorrências</span>
+        </header>
+        <div
+          class="dashboard-projection-chart"
+          aria-label="Projeção de fluxo líquido dos próximos seis meses"
+        >
+          @for (month of dashboard.summary.cashFlowProjection.items; track month.referenceMonth) {
+            <div class="dashboard-projection-month">
+              <div>
+                <i
+                  [class.negative]="month.projectedNet < 0"
+                  [style.height.%]="projectionBarHeight(month)"
+                  [title]="month.projectedNet | currency: 'BRL'"
+                ></i>
+              </div>
+              <span>{{ monthLabel(month.referenceMonth) }}</span>
+            </div>
+          }
+        </div>
+        <div class="projection-callout">
+          <span>Fluxo acumulado projetado<small>Não representa saldo bancário</small></span>
+          <strong
+            [class.negative-text]="
+              dashboard.summary.cashFlowProjection.projectedCumulativeBalance < 0
+            "
+            >{{
+              dashboard.summary.cashFlowProjection.projectedCumulativeBalance | currency: 'BRL'
+            }}</strong
+          >
+        </div>
+      </article>
+
       <article class="surface-card categories-card">
         <header class="card-header">
           <div>
@@ -530,10 +628,12 @@
           <div class="category-list">
             @for (category of dashboard.categoryTotals.slice(0, 5); track category.category) {
               <div class="category-item">
-                <span class="category-icon">{{ categoryIcon(category.category) }}</span>
+                <span class="category-icon">{{
+                  categoryIcon(category.category, category.name)
+                }}</span>
                 <div class="category-copy">
                   <span
-                    ><strong>{{ categoryLabel(category.category) }}</strong
+                    ><strong>{{ category.name }}</strong
                     ><small>{{ category.percentage | percent: '1.0-0' }}</small></span
                   >
                   <div class="category-track">
