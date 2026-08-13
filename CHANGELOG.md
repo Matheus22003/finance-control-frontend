@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-08-13
+
 ### Added
 
 - Angular SPA responsiva com temas claro e escuro;
@@ -17,4 +19,5 @@
 - espaçamento consistente entre as seções da tela de amigos e grupos;
 - preservação dos participantes ao editar uma dívida compartilhada.
 
-[Unreleased]: https://github.com/Matheus22003/finance-control-frontend/compare/main...develop
+[Unreleased]: https://github.com/Matheus22003/finance-control-frontend/compare/v0.1.0...develop
+[0.1.0]: https://github.com/Matheus22003/finance-control-frontend/releases/tag/v0.1.0
