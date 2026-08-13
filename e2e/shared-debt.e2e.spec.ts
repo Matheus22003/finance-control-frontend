@@ -62,6 +62,26 @@ async function createSharedDebt(page: Page, debtName: string): Promise<void> {
   await expect(page.locator('.debt-item').filter({ hasText: debtName })).toBeVisible();
 }
 
+async function editSharedDebt(page: Page, currentName: string, updatedName: string): Promise<void> {
+  const currentDebt = page.locator('.debt-item').filter({ hasText: currentName });
+  await currentDebt.getByRole('button', { name: `Editar ${currentName}` }).click();
+
+  const dialog = page.getByRole('dialog', { name: 'Atualizar dívida' });
+  await expect(
+    dialog
+      .locator('.participant-row')
+      .filter({ hasText: friendAccount.email })
+      .getByRole('checkbox'),
+  ).toBeChecked();
+  await dialog.locator('#debt-description').fill(updatedName);
+  await dialog.getByRole('button', { name: 'Salvar alterações' }).click();
+
+  await expect(page.locator('.debt-item').filter({ hasText: updatedName })).toBeVisible();
+  await expect(
+    page.locator('.debt-copy > strong').getByText(currentName, { exact: true }),
+  ).toHaveCount(0);
+}
+
 async function getSettlementTransfer(page: Page): Promise<Locator> {
   await page.goto('/debts');
   await expect(page.getByRole('heading', { name: 'Dívidas', exact: true })).toBeVisible();
@@ -86,14 +106,16 @@ test('autoriza amizade e quita uma dívida por pagamento simplificado entre duas
     timezoneId: 'America/Sao_Paulo',
   });
   const friendPage = await friendContext.newPage();
-  const debtName = `Dívida E2E compartilhada ${Date.now()}-${testInfo.workerIndex}`;
+  const initialDebtName = `Dívida E2E compartilhada ${Date.now()}-${testInfo.workerIndex}`;
+  const debtName = `${initialDebtName} editada`;
 
   await loginAsDemo(page);
   await loginAsFriend(friendPage);
 
   try {
     await resetAndCreateFriendship(page, friendPage);
-    await createSharedDebt(page, debtName);
+    await createSharedDebt(page, initialDebtName);
+    await editSharedDebt(page, initialDebtName, debtName);
 
     const payerTransfer = await getSettlementTransfer(friendPage);
     await payerTransfer.getByRole('button', { name: 'Registrar pagamento' }).click();
