@@ -67,6 +67,12 @@ jobs:
       - name: Compilar aplicação
         run: npm run build
 
+      - name: Validar artefatos do Cloudflare Pages
+        run: |
+          test -f dist/finance-control-frontend/browser/_worker.js
+          test -f dist/finance-control-frontend/browser/_headers
+          node --input-type=module --check < public/_worker.js
+
       - name: Auditar dependências
         run: npm audit --audit-level=high
 
