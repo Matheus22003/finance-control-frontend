@@ -38,14 +38,6 @@ export class LoginPage {
     password: ['', Validators.required],
   });
 
-  protected useDemoAccount(): void {
-    this.form.setValue({
-      email: 'demo@financecontrol.local',
-      password: 'ChangeMe123!',
-    });
-    this.errorMessage.set(null);
-  }
-
   protected submit(): void {
     this.errorMessage.set(null);
 
