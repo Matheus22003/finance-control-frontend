@@ -135,32 +135,36 @@ docker run --rm --publish 4200:8080 finance-control-frontend:local
 
 No uso normal, suba o projeto pelo `finance-control-infra`. O Nginx encaminha `/api/*` internamente para o container do BFF.
 
-## Cloudflare Pages
+## Vercel
 
-O build de produção inclui `public/_worker.js`, que mantém o frontend e o BFF
-na mesma origem pública. O Worker encaminha somente `/api/*`, incluindo o hub
-SignalR, e entrega os demais caminhos pelo binding estático `ASSETS` com
-fallback para `index.html`.
+O `vercel.json` publica a SPA como conteúdo estático e mantém as APIs REST e o
+BFF na mesma origem pública. O rewrite encaminha somente `/api/*` ao BFF
+exposto pelo zrok no ZimaOS. Todas as outras rotas usam fallback para
+`index.html`.
 
-Configuração do Pages:
+Esse desenho preserva o refresh cookie `HttpOnly`, evita CORS entre o Angular e
+o BFF e mantém a regra de que o frontend nunca acessa os microserviços
+diretamente. As respostas da API não são armazenadas no CDN.
+
+O upgrade WebSocket não atravessa o rewrite externo da Vercel. Por isso,
+somente quando o hostname termina em `.vercel.app`, o cliente SignalR usa
+WebSocket direto no endpoint público do BFF, com JWT e sem negociação HTTP. Em
+localhost e no container Nginx, o hub continua relativo e passa pelo proxy da
+mesma origem.
+
+Configuração do projeto:
 
 | Campo | Valor |
 |---|---|
-| Production branch | `main` |
+| Framework preset | `Angular` |
 | Build command | `npm run build` |
 | Build output directory | `dist/finance-control-frontend/browser` |
 | Node.js | `26.4.0` |
 
-Variáveis e secrets obrigatórios no ambiente de produção:
-
-| Nome | Tipo | Exemplo |
-|---|---|---|
-| `BFF_ORIGIN` | variável | `https://api-finance-control.example.org` |
-| `ORIGIN_VERIFY_TOKEN` | secret | valor aleatório compartilhado apenas com o Caddy |
-
-`BFF_ORIGIN` deve usar HTTPS. O Worker sempre remove um eventual header
-`X-Origin-Verify` enviado pelo navegador e insere o secret configurado no
-Cloudflare. O mesmo valor precisa existir no `.env.oci` da VM.
+O frontend não exige secrets na Vercel. O endereço público do BFF está no
+destino do rewrite e pode ser trocado no `vercel.json` sem alterar o código
+Angular. O zrok é o único cliente público da rede `edge-network`; BFF, Finance
+Service e Debt Service permanecem sem portas publicadas no host.
 
 ## Identidade visual
 
