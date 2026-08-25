@@ -30,6 +30,9 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
+.env*
+!.env.example
+!.env.oci.example
 /.angular/cache
 .sass-cache/
 /connect.lock
@@ -44,3 +47,4 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+.vercel

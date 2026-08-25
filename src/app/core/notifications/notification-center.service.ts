@@ -3,6 +3,7 @@ import {
   HubConnection,
   HubConnectionBuilder,
   HubConnectionState,
+  HttpTransportType,
   LogLevel,
 } from '@microsoft/signalr';
 import { Subject, finalize, forkJoin } from 'rxjs';
@@ -10,6 +11,7 @@ import { Subject, finalize, forkJoin } from 'rxjs';
 import { FinanceControlApiService } from '../api/finance-control-api.service';
 import { NotificationResponse } from '../api/api.models';
 import { AuthService } from '../auth/auth.service';
+import { getNotificationHubConfiguration } from '../config/deployment.config';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationCenterService {
@@ -40,9 +42,16 @@ export class NotificationCenterService {
     this.shouldStayConnected = true;
     this.refresh();
     this.synchronizeAlerts();
+    const hubConfiguration = getNotificationHubConfiguration();
     this.connection = new HubConnectionBuilder()
-      .withUrl('/api/v1/notifications/hub', {
+      .withUrl(hubConfiguration.url, {
         accessTokenFactory: () => this.authService.accessToken() ?? '',
+        ...(hubConfiguration.directWebSocket
+          ? {
+              skipNegotiation: true,
+              transport: HttpTransportType.WebSockets,
+            }
+          : {}),
       })
       .withAutomaticReconnect([0, 2_000, 10_000, 30_000])
       .configureLogging(LogLevel.Warning)

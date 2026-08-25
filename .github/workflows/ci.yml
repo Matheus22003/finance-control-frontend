@@ -67,6 +67,49 @@ jobs:
       - name: Compilar aplicação
         run: npm run build
 
+      - name: Validar configuração da Vercel
+        run: |
+          test -f vercel.json
+          test ! -e dist/finance-control-frontend/browser/_worker.js
+          test ! -e dist/finance-control-frontend/browser/_headers
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+
+          const config = JSON.parse(await readFile('vercel.json', 'utf8'));
+          const apiRewrite = config.rewrites?.find(
+            (rewrite) => rewrite.source === '/api/:path*',
+          );
+          const spaRewrite = config.rewrites?.find(
+            (rewrite) => rewrite.source === '/(.*)',
+          );
+          const zrokHeaderTransform = config.routes?.some((route) =>
+            route.src === '/api/(.*)' &&
+            route.transforms?.some((transform) =>
+              transform.type === 'request.headers' &&
+              transform.op === 'set' &&
+              transform.target?.key === 'skip_zrok_interstitial' &&
+              transform.args === 'true',
+            ),
+          );
+
+          if (config.framework !== 'angular') {
+            throw new Error('vercel.json must use the Angular framework preset.');
+          }
+          if (config.outputDirectory !== 'dist/finance-control-frontend/browser') {
+            throw new Error('vercel.json contains an unexpected output directory.');
+          }
+          if (apiRewrite?.destination !==
+              'https://finance-control.shares.zrok.io/api/:path*') {
+            throw new Error('The Vercel API rewrite must target the public BFF.');
+          }
+          if (spaRewrite?.destination !== '/index.html') {
+            throw new Error('The Vercel SPA fallback is missing.');
+          }
+          if (!zrokHeaderTransform) {
+            throw new Error('The zrok interstitial bypass transform is missing.');
+          }
+          NODE
+
       - name: Auditar dependências
         run: npm audit --audit-level=high
 

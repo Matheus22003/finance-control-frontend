@@ -135,6 +135,37 @@ docker run --rm --publish 4200:8080 finance-control-frontend:local
 
 No uso normal, suba o projeto pelo `finance-control-infra`. O Nginx encaminha `/api/*` internamente para o container do BFF.
 
+## Vercel
+
+O `vercel.json` publica a SPA como conteúdo estático e mantém as APIs REST e o
+BFF na mesma origem pública. O rewrite encaminha somente `/api/*` ao BFF
+exposto pelo zrok no ZimaOS. Todas as outras rotas usam fallback para
+`index.html`.
+
+Esse desenho preserva o refresh cookie `HttpOnly`, evita CORS entre o Angular e
+o BFF e mantém a regra de que o frontend nunca acessa os microserviços
+diretamente. As respostas da API não são armazenadas no CDN.
+
+O upgrade WebSocket não atravessa o rewrite externo da Vercel. Por isso,
+somente quando o hostname termina em `.vercel.app`, o cliente SignalR usa
+WebSocket direto no endpoint público do BFF, com JWT e sem negociação HTTP. Em
+localhost e no container Nginx, o hub continua relativo e passa pelo proxy da
+mesma origem.
+
+Configuração do projeto:
+
+| Campo | Valor |
+|---|---|
+| Framework preset | `Angular` |
+| Build command | `npm run build` |
+| Build output directory | `dist/finance-control-frontend/browser` |
+| Node.js | `26.4.0` |
+
+O frontend não exige secrets na Vercel. O endereço público do BFF está no
+destino do rewrite e pode ser trocado no `vercel.json` sem alterar o código
+Angular. O zrok é o único cliente público da rede `edge-network`; BFF, Finance
+Service e Debt Service permanecem sem portas publicadas no host.
+
 ## Identidade visual
 
 A implementação segue a direção aprovada no Google Stitch:
