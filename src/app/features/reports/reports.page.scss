@@ -1,0 +1,456 @@
+:host {
+  display: block;
+}
+
+.reports-page {
+  display: grid;
+  gap: 22px;
+}
+
+.page-header,
+.period-summary,
+.surface-card > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.page-header h1 {
+  margin: 4px 0 6px;
+  font-size: clamp(1.8rem, 3vw, 2.45rem);
+  letter-spacing: -0.045em;
+}
+.page-header p {
+  margin: 0;
+  color: var(--text-secondary);
+}
+.eyebrow,
+.section-kicker {
+  color: var(--action-primary);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.export-button,
+.period-card button {
+  display: inline-flex;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 11px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  background: var(--action-primary);
+  color: #062a2a;
+  font-weight: 800;
+}
+
+.export-button:disabled,
+.period-card button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.export-button svg {
+  width: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.period-card {
+  display: grid;
+  padding: 18px 20px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  grid-template-columns: minmax(160px, 1fr) minmax(160px, 1fr) auto;
+  align-items: end;
+  gap: 14px;
+  background: var(--background-elevated);
+}
+
+.period-card label {
+  display: grid;
+  gap: 7px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 750;
+}
+.period-card input {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 13px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  background: var(--background-primary);
+  color: var(--text-primary);
+  font: inherit;
+  color-scheme: dark;
+}
+.period-card small {
+  grid-column: 1 / -1;
+  color: var(--text-secondary);
+  font-size: 0.65rem;
+}
+
+.feedback {
+  padding: 13px 16px;
+  border-radius: 11px;
+  font-size: 0.76rem;
+}
+.feedback.error {
+  border: 1px solid color-mix(in srgb, var(--status-negative) 36%, transparent);
+  background: var(--status-negative-soft);
+  color: var(--status-negative);
+}
+
+.period-summary {
+  align-items: center;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+.period-summary span {
+  color: var(--text-primary);
+  font-weight: 750;
+  text-transform: capitalize;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.summary-card {
+  position: relative;
+  display: grid;
+  min-height: 126px;
+  padding: 18px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-radius: 15px;
+  align-content: center;
+  gap: 7px;
+  background: var(--background-elevated);
+}
+.summary-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--action-primary);
+  content: '';
+}
+.summary-card.income::before,
+.summary-card.receive::before {
+  background: var(--status-positive);
+}
+.summary-card.expense::before,
+.summary-card.debt::before,
+.summary-card.negative::before {
+  background: var(--status-negative);
+}
+.summary-card span {
+  color: var(--text-secondary);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+.summary-card strong {
+  font-size: clamp(1.15rem, 2.4vw, 1.55rem);
+  letter-spacing: -0.035em;
+}
+.summary-card small {
+  color: var(--text-secondary);
+  font-size: 0.64rem;
+}
+
+.skeleton {
+  min-height: 126px;
+  background: linear-gradient(
+    100deg,
+    var(--background-elevated) 30%,
+    var(--action-primary-soft) 50%,
+    var(--background-elevated) 70%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.35s infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position-x: -220%;
+  }
+}
+
+.highlights-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.highlights-grid article {
+  display: grid;
+  padding: 15px 17px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 13px;
+  gap: 5px;
+  background: var(--action-primary-soft);
+}
+.highlights-grid span {
+  color: var(--text-secondary);
+  font-size: 0.63rem;
+}
+.highlights-grid strong {
+  font-size: 0.82rem;
+  text-transform: capitalize;
+}
+
+.surface-card {
+  padding: 22px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 17px;
+  background: var(--background-elevated);
+}
+.surface-card h2 {
+  margin: 4px 0 0;
+  font-size: 1.03rem;
+}
+.legend {
+  display: flex;
+  gap: 16px;
+  color: var(--text-secondary);
+  font-size: 0.64rem;
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.legend span::before {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  content: '';
+}
+.income-dot::before {
+  background: var(--status-positive);
+}
+.expense-dot::before {
+  background: var(--status-negative);
+}
+
+.chart {
+  display: grid;
+  min-height: 290px;
+  padding-top: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(76px, 1fr));
+  align-items: end;
+  gap: 12px;
+}
+.chart-column {
+  display: grid;
+  min-width: 0;
+  align-items: end;
+  gap: 7px;
+  text-align: center;
+}
+.bars {
+  display: flex;
+  height: 190px;
+  align-items: end;
+  justify-content: center;
+  gap: 5px;
+}
+.bar {
+  width: min(25px, 36%);
+  min-height: 4px;
+  border-radius: 6px 6px 2px 2px;
+}
+.income-bar {
+  background: var(--status-positive);
+}
+.expense-bar {
+  background: var(--status-negative);
+}
+.chart-column strong {
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+.chart-column small {
+  color: var(--text-secondary);
+  font-size: 0.61rem;
+  text-transform: capitalize;
+}
+.negative-text {
+  color: var(--status-negative);
+}
+
+.analysis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.category-list,
+.debt-category-list,
+.ranked-list {
+  display: grid;
+  margin-top: 18px;
+}
+.category-row {
+  display: grid;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 16px;
+}
+.category-copy,
+.item-copy,
+.debt-category-row > span {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+.category-copy strong,
+.debt-category-row strong,
+.item-copy strong {
+  overflow: hidden;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.category-copy small,
+.debt-category-row small,
+.item-copy small {
+  color: var(--text-secondary);
+  font-size: 0.62rem;
+}
+.category-value {
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+.progress {
+  height: 5px;
+  border-radius: 999px;
+  grid-column: 1 / -1;
+  background: var(--background-primary);
+  overflow: hidden;
+}
+.progress i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--action-primary);
+}
+
+.debt-category-row {
+  display: flex;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.debt-values {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 3px;
+  text-align: right;
+}
+.debt-values strong {
+  color: var(--status-positive);
+  font-size: 0.7rem;
+}
+.debt-values small {
+  color: var(--status-negative);
+}
+
+.ranked-list > div {
+  display: grid;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border-subtle);
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+}
+.rank {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  border-radius: 8px;
+  place-items: center;
+  background: var(--action-primary-soft);
+  color: var(--action-primary);
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+.ranked-list > div > strong {
+  font-size: 0.73rem;
+}
+.empty-state {
+  padding: 36px 14px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+@media (max-width: 1100px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .highlights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .export-button {
+    width: 100%;
+  }
+  .period-card {
+    grid-template-columns: 1fr;
+  }
+  .period-card small {
+    grid-column: auto;
+  }
+  .summary-grid,
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+  .summary-card {
+    min-height: 112px;
+  }
+  .surface-card {
+    padding: 18px;
+  }
+  .trend-card {
+    overflow-x: auto;
+  }
+  .chart {
+    min-width: 560px;
+  }
+  .period-summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+}
+
+@media (max-width: 430px) {
+  .highlights-grid {
+    grid-template-columns: 1fr;
+  }
+  .ranked-list > div {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+  .ranked-list > div > strong,
+  .ranked-list > div > .debt-values {
+    grid-column: 2;
+    text-align: left;
+  }
+}

@@ -501,4 +501,35 @@ describe('FinanceControlApiService', () => {
     expect(projection.request.method).toBe('GET');
     projection.flush({ items: [] });
   });
+
+  it('loads and exports analytical reports only through protected BFF endpoints', () => {
+    service.getReportOverview('2026-01', '2026-06').subscribe();
+    const overview = httpTesting.expectOne(
+      (request) =>
+        request.url === '/api/v1/reports/overview' &&
+        request.params.get('from') === '2026-01' &&
+        request.params.get('to') === '2026-06',
+    );
+    expect(overview.request.method).toBe('GET');
+    overview.flush({
+      fromMonth: '2026-01',
+      toMonth: '2026-06',
+      monthCount: 6,
+      generatedAt: '2026-08-26T12:00:00Z',
+      finance: { months: [], expenseCategories: [], topExpenses: [] },
+      debts: { months: [], categories: [], topDebts: [] },
+      highlights: {},
+    });
+
+    service.exportReportCsv('2026-01', '2026-06').subscribe();
+    const exportRequest = httpTesting.expectOne(
+      (request) =>
+        request.url === '/api/v1/reports/export.csv' &&
+        request.params.get('from') === '2026-01' &&
+        request.params.get('to') === '2026-06',
+    );
+    expect(exportRequest.request.method).toBe('GET');
+    expect(exportRequest.request.responseType).toBe('blob');
+    exportRequest.flush(new Blob(['report'], { type: 'text/csv' }));
+  });
 });
