@@ -35,6 +35,7 @@ import {
   PaymentRequest,
   PaymentResponse,
   RecordSettlementTransferRequest,
+  ReportOverviewResponse,
   NotificationResponse,
   NotificationPreferencesResponse,
   UpdateNotificationPreferencesRequest,
@@ -283,6 +284,19 @@ export class FinanceControlApiService {
   getCashFlowProjection(months = 6): Observable<CashFlowProjectionResponse> {
     return this.http.get<CashFlowProjectionResponse>('/api/v1/finance/projections/cash-flow', {
       params: { months },
+    });
+  }
+
+  getReportOverview(from: string, to: string): Observable<ReportOverviewResponse> {
+    return this.http.get<ReportOverviewResponse>('/api/v1/reports/overview', {
+      params: { from, to },
+    });
+  }
+
+  exportReportCsv(from: string, to: string): Observable<Blob> {
+    return this.http.get('/api/v1/reports/export.csv', {
+      params: { from, to },
+      responseType: 'blob',
     });
   }
 

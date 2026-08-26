@@ -32,6 +32,12 @@
           }}</span>
         }
       </a>
+      <a routerLink="/reports" routerLinkActive="active">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 19V9m5 10V5m5 14v-7m5 7V3M3 19h18" />
+        </svg>
+        <span>Relatórios</span>
+      </a>
       <a routerLink="/people" routerLinkActive="active">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
@@ -49,11 +55,15 @@
         <span>Amigos & grupos</span>
       </a>
       <a routerLink="/security" routerLinkActive="active">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.8 2.8 8.2 7 10 4.2-1.8 7-5.2 7-10V6l-7-3Zm-3 9 2 2 4-4" /></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 3 5 6v5c0 4.8 2.8 8.2 7 10 4.2-1.8 7-5.2 7-10V6l-7-3Zm-3 9 2 2 4-4" />
+        </svg>
         <span>Segurança</span>
       </a>
       <a routerLink="/account" routerLinkActive="active">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" /></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" />
+        </svg>
         <span>Minha conta</span>
       </a>
     </nav>
@@ -68,7 +78,11 @@
 
       <div class="profile-card">
         <a class="avatar" routerLink="/account" aria-label="Abrir minha conta">
-          @if (avatarUrl()) { <img [src]="avatarUrl()" alt="" /> } @else { {{ userInitials() }} }
+          @if (avatarUrl()) {
+            <img [src]="avatarUrl()" alt="" />
+          } @else {
+            {{ userInitials() }}
+          }
         </a>
         <span class="profile-copy">
           <strong>{{ userDisplayName() }}</strong>
@@ -90,7 +104,11 @@
     </a>
     <span class="mobile-header-actions">
       <a class="mobile-account-button" routerLink="/account" aria-label="Abrir minha conta">
-        @if (avatarUrl()) { <img [src]="avatarUrl()" alt="" /> } @else { {{ userInitials() }} }
+        @if (avatarUrl()) {
+          <img [src]="avatarUrl()" alt="" />
+        } @else {
+          {{ userInitials() }}
+        }
       </a>
       <button
         class="notification-button"
@@ -212,6 +230,12 @@
     </a>
     <a class="quick-add" routerLink="/finance" aria-label="Adicionar lançamento">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+    </a>
+    <a routerLink="/reports" routerLinkActive="active">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 19V9m5 10V5m5 14v-7m5 7V3M3 19h18" />
+      </svg>
+      <span>Relatórios</span>
     </a>
     <a routerLink="/debts" routerLinkActive="active">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16l8-8M7 7h5m5 10h-5" /></svg>

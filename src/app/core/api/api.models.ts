@@ -588,3 +588,93 @@ export interface CreateGroupRequest {
   description: string | null;
   memberUserIds: string[];
 }
+export interface ReportOverviewResponse {
+  fromMonth: string;
+  toMonth: string;
+  monthCount: number;
+  generatedAt: string;
+  finance: ReportFinanceSection;
+  debts: ReportDebtSection;
+  highlights: ReportHighlights;
+}
+
+export interface ReportFinanceSection {
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+  savingsRatePercentage: number;
+  incomeCount: number;
+  expenseCount: number;
+  months: ReportFinanceMonth[];
+  expenseCategories: ReportFinanceCategory[];
+  topExpenses: ReportExpenseItem[];
+}
+
+export interface ReportFinanceMonth {
+  referenceMonth: string;
+  totalIncome: number;
+  totalExpenses: number;
+  balance: number;
+}
+
+export interface ReportFinanceCategory {
+  category: string;
+  name: string;
+  amount: number;
+  percentage: number;
+}
+
+export interface ReportExpenseItem {
+  id: string;
+  description: string;
+  amount: number;
+  transactionDate: string;
+  category: string;
+  categoryName: string;
+}
+
+export interface ReportDebtSection {
+  totalVolume: number;
+  totalOwed: number;
+  totalToReceive: number;
+  openDebtsCount: number;
+  paidDebtsCount: number;
+  months: ReportDebtMonth[];
+  categories: ReportDebtCategory[];
+  topDebts: ReportDebtItem[];
+}
+
+export interface ReportDebtMonth {
+  referenceMonth: string;
+  totalVolume: number;
+  totalOwed: number;
+  totalToReceive: number;
+  debtCount: number;
+}
+
+export interface ReportDebtCategory {
+  category: string;
+  totalVolume: number;
+  totalOwed: number;
+  totalToReceive: number;
+  debtCount: number;
+}
+
+export interface ReportDebtItem {
+  id: string;
+  description: string;
+  category: string;
+  totalAmount: number;
+  totalOwed: number;
+  totalToReceive: number;
+  status: string;
+  dueDate: string | null;
+  createdAt: string;
+}
+
+export interface ReportHighlights {
+  averageMonthlyIncome: number;
+  averageMonthlyExpenses: number;
+  bestBalanceMonth: string | null;
+  highestExpenseCategory: string | null;
+}
