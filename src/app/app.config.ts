@@ -1,8 +1,16 @@
 import { registerLocaleData } from '@angular/common';
 import localePt from '@angular/common/locales/pt';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
-import { ApplicationConfig, inject, LOCALE_ID, provideAppInitializer, provideBrowserGlobalErrorListeners } from '@angular/core';
+import {
+  ApplicationConfig,
+  inject,
+  isDevMode,
+  LOCALE_ID,
+  provideAppInitializer,
+  provideBrowserGlobalErrorListeners,
+} from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideServiceWorker } from '@angular/service-worker';
 
 import { authInterceptor } from './core/auth/auth.interceptor';
 import { AuthService } from './core/auth/auth.service';
@@ -16,6 +24,10 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([authInterceptor])),
     provideAppInitializer(() => inject(AuthService).initialize()),
     provideRouter(routes, withComponentInputBinding()),
+    provideServiceWorker('ngsw-worker.js', {
+      enabled: !isDevMode(),
+      registrationStrategy: 'registerWhenStable:30000',
+    }),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
   ],
 };

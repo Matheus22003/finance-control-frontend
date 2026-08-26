@@ -330,6 +330,64 @@ describe('FinanceControlApiService', () => {
     expect(markAll.request.method).toBe('POST');
     expect(markAll.request.body).toBeNull();
     markAll.flush({ unreadCount: 0 });
+
+    service.getNotificationPreferences().subscribe();
+    const getPreferences = httpTesting.expectOne('/api/v1/notifications/preferences');
+    expect(getPreferences.request.method).toBe('GET');
+    getPreferences.flush({ preferences: [] });
+
+    const preferences = {
+      preferences: [
+        {
+          type: 'DEBT_CREATED' as const,
+          inAppEnabled: true,
+          pushEnabled: true,
+          emailEnabled: false,
+        },
+      ],
+    };
+    service.updateNotificationPreferences(preferences).subscribe();
+    const updatePreferences = httpTesting.expectOne('/api/v1/notifications/preferences');
+    expect(updatePreferences.request.method).toBe('PUT');
+    expect(updatePreferences.request.body).toEqual(preferences);
+    updatePreferences.flush(preferences);
+
+    service.getPushNotificationConfiguration().subscribe();
+    const configuration = httpTesting.expectOne('/api/v1/notifications/push/configuration');
+    expect(configuration.request.method).toBe('GET');
+    configuration.flush({ isConfigured: false, publicKey: null });
+
+    service.getPushSubscriptions().subscribe();
+    const subscriptions = httpTesting.expectOne('/api/v1/notifications/push/subscriptions');
+    expect(subscriptions.request.method).toBe('GET');
+    subscriptions.flush([]);
+
+    const pushSubscription = {
+      endpoint: 'https://push.example/subscription',
+      p256Dh: 'p256dh',
+      auth: 'auth',
+      deviceName: 'Test browser',
+    };
+    service.createPushSubscription(pushSubscription).subscribe();
+    const createSubscription = httpTesting.expectOne('/api/v1/notifications/push/subscriptions');
+    expect(createSubscription.request.method).toBe('POST');
+    expect(createSubscription.request.body).toEqual(pushSubscription);
+    createSubscription.flush({});
+
+    service.removePushSubscription('subscription-id').subscribe();
+    const removeSubscription = httpTesting.expectOne(
+      '/api/v1/notifications/push/subscriptions/subscription-id',
+    );
+    expect(removeSubscription.request.method).toBe('DELETE');
+    removeSubscription.flush(null);
+
+    service.unsubscribeCurrentPushEndpoint(pushSubscription.endpoint).subscribe();
+    const unsubscribe = httpTesting.expectOne(
+      '/api/v1/notifications/push/subscriptions/unsubscribe',
+    );
+    expect(unsubscribe.request.method).toBe('POST');
+    expect(unsubscribe.request.body).toEqual({ endpoint: pushSubscription.endpoint });
+    unsubscribe.flush(null);
   });
 
   it('requests AI analysis only through the protected BFF endpoint', () => {

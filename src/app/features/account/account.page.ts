@@ -1,18 +1,32 @@
-import { DOCUMENT } from '@angular/common';
+import { DatePipe, DOCUMENT } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 
 import { UserProfileStateService } from '../../core/account/user-profile-state.service';
-import { AccountDeletionEligibilityResponse, ProblemDetails } from '../../core/api/api.models';
+import {
+  AccountDeletionEligibilityResponse,
+  NotificationChannel,
+  NotificationPreferenceItemResponse,
+  ProblemDetails,
+  PushSubscriptionResponse,
+} from '../../core/api/api.models';
 import { FinanceControlApiService } from '../../core/api/finance-control-api.service';
 import { AuthService } from '../../core/auth/auth.service';
+import { WebPushNotificationService } from '../../core/notifications/web-push-notification.service';
 
 @Component({
   selector: 'app-account-page',
-  imports: [ReactiveFormsModule],
+  imports: [DatePipe, ReactiveFormsModule],
   templateUrl: './account.page.html',
   styleUrl: './account.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -23,12 +37,14 @@ export class AccountPage {
   private readonly document = inject(DOCUMENT);
   private readonly router = inject(Router);
   private readonly auth = inject(AuthService);
+  protected readonly webPush = inject(WebPushNotificationService);
   protected readonly profileState = inject(UserProfileStateService);
   protected readonly profile = this.profileState.profile;
   protected readonly avatarUrl = this.profileState.avatarObjectUrl;
   protected readonly initials = this.profileState.initials;
   protected readonly isSavingProfile = signal(false);
   protected readonly isSavingPreferences = signal(false);
+  protected readonly isSavingNotificationPreferences = signal(false);
   protected readonly isUploadingAvatar = signal(false);
   protected readonly isRequestingEmail = signal(false);
   protected readonly isExporting = signal(false);
@@ -37,6 +53,22 @@ export class AccountPage {
   protected readonly deletionEligibility = signal<AccountDeletionEligibilityResponse | null>(null);
   protected readonly profileMessage = signal<string | null>(null);
   protected readonly preferencesMessage = signal<string | null>(null);
+  protected readonly notificationPreferencesMessage = signal<string | null>(null);
+  protected readonly notificationPreferences = signal<NotificationPreferenceItemResponse[]>([]);
+  protected readonly notificationGroups = computed(() => {
+    const labels: Record<NotificationPreferenceItemResponse['category'], string> = {
+      SOCIAL: 'Amigos e grupos',
+      DEBTS: 'Dívidas e pagamentos',
+      FINANCE: 'Finanças, orçamentos e metas',
+    };
+    return (['SOCIAL', 'DEBTS', 'FINANCE'] as const).map((category) => ({
+      category,
+      label: labels[category],
+      preferences: this.notificationPreferences().filter(
+        (preference) => preference.category === category,
+      ),
+    }));
+  });
   protected readonly avatarMessage = signal<string | null>(null);
   protected readonly emailMessage = signal<string | null>(null);
   protected readonly exportMessage = signal<string | null>(null);
@@ -66,6 +98,8 @@ export class AccountPage {
   constructor() {
     this.profileState.load();
     this.loadDeletionEligibility();
+    this.loadNotificationPreferences();
+    this.webPush.refresh();
     effect(() => {
       const profile = this.profile();
       if (!profile || profile.id === this.initializedUserId) return;
@@ -83,23 +117,24 @@ export class AccountPage {
     }
 
     this.isSavingProfile.set(true);
-    this.api.updateProfile(this.profileForm.controls.displayName.value)
+    this.api
+      .updateProfile(this.profileForm.controls.displayName.value)
       .pipe(finalize(() => this.isSavingProfile.set(false)))
       .subscribe({
         next: (profile) => {
           this.profileState.apply(profile);
           this.profileMessage.set('Nome atualizado em toda a sua conta.');
         },
-        error: (error: unknown) => this.profileMessage.set(
-          this.errorDetail(error, 'Não foi possível atualizar o perfil.'),
-        ),
+        error: (error: unknown) =>
+          this.profileMessage.set(this.errorDetail(error, 'Não foi possível atualizar o perfil.')),
       });
   }
 
   protected savePreferences(): void {
     this.preferencesMessage.set(null);
     this.isSavingPreferences.set(true);
-    this.api.updatePreferences(this.preferencesForm.getRawValue())
+    this.api
+      .updatePreferences(this.preferencesForm.getRawValue())
       .pipe(finalize(() => this.isSavingPreferences.set(false)))
       .subscribe({
         next: (profile) => {
@@ -108,6 +143,49 @@ export class AccountPage {
         },
         error: () => this.preferencesMessage.set('Não foi possível salvar as preferências.'),
       });
+  }
+
+  protected toggleNotificationPreference(
+    type: NotificationPreferenceItemResponse['type'],
+    channel: NotificationChannel,
+    event: Event,
+  ): void {
+    const enabled = (event.target as HTMLInputElement).checked;
+    this.notificationPreferences.update((current) =>
+      current.map((preference) =>
+        preference.type === type ? { ...preference, [channel]: enabled } : preference,
+      ),
+    );
+  }
+
+  protected saveNotificationPreferences(): void {
+    this.notificationPreferencesMessage.set(null);
+    this.isSavingNotificationPreferences.set(true);
+    const preferences = this.notificationPreferences().map(
+      ({ type, inAppEnabled, pushEnabled, emailEnabled }) => ({
+        type,
+        inAppEnabled,
+        pushEnabled,
+        emailEnabled,
+      }),
+    );
+    this.api
+      .updateNotificationPreferences({ preferences })
+      .pipe(finalize(() => this.isSavingNotificationPreferences.set(false)))
+      .subscribe({
+        next: (response) => {
+          this.notificationPreferences.set(response.preferences);
+          this.notificationPreferencesMessage.set('Preferências de eventos salvas.');
+        },
+        error: () =>
+          this.notificationPreferencesMessage.set(
+            'Não foi possível salvar as preferências de eventos.',
+          ),
+      });
+  }
+
+  protected removePushDevice(device: PushSubscriptionResponse): void {
+    this.webPush.removeDevice(device);
   }
 
   protected selectAvatar(event: Event): void {
@@ -122,26 +200,32 @@ export class AccountPage {
     }
 
     this.isUploadingAvatar.set(true);
-    this.api.updateAvatar(file).pipe(finalize(() => this.isUploadingAvatar.set(false))).subscribe({
-      next: (profile) => {
-        this.profileState.apply(profile);
-        this.avatarMessage.set('Foto atualizada.');
-      },
-      error: () => this.avatarMessage.set('Não foi possível atualizar a foto.'),
-    });
+    this.api
+      .updateAvatar(file)
+      .pipe(finalize(() => this.isUploadingAvatar.set(false)))
+      .subscribe({
+        next: (profile) => {
+          this.profileState.apply(profile);
+          this.avatarMessage.set('Foto atualizada.');
+        },
+        error: () => this.avatarMessage.set('Não foi possível atualizar a foto.'),
+      });
   }
 
   protected deleteAvatar(): void {
     this.avatarMessage.set(null);
     this.isUploadingAvatar.set(true);
-    this.api.deleteAvatar().pipe(finalize(() => this.isUploadingAvatar.set(false))).subscribe({
-      next: () => {
-        const profile = this.profile();
-        if (profile) this.profileState.apply({ ...profile, avatarUrl: null });
-        this.avatarMessage.set('Foto removida.');
-      },
-      error: () => this.avatarMessage.set('Não foi possível remover a foto.'),
-    });
+    this.api
+      .deleteAvatar()
+      .pipe(finalize(() => this.isUploadingAvatar.set(false)))
+      .subscribe({
+        next: () => {
+          const profile = this.profile();
+          if (profile) this.profileState.apply({ ...profile, avatarUrl: null });
+          this.avatarMessage.set('Foto removida.');
+        },
+        error: () => this.avatarMessage.set('Não foi possível remover a foto.'),
+      });
   }
 
   protected requestEmailChange(): void {
@@ -153,16 +237,16 @@ export class AccountPage {
 
     const value = this.emailForm.getRawValue();
     this.isRequestingEmail.set(true);
-    this.api.requestEmailChange(value.newEmail, value.password)
+    this.api
+      .requestEmailChange(value.newEmail, value.password)
       .pipe(finalize(() => this.isRequestingEmail.set(false)))
       .subscribe({
         next: () => {
           this.emailForm.reset();
           this.emailMessage.set(`Enviamos a confirmação para ${value.newEmail}.`);
         },
-        error: (error: unknown) => this.emailMessage.set(
-          this.errorDetail(error, 'Não foi possível solicitar a alteração.'),
-        ),
+        error: (error: unknown) =>
+          this.emailMessage.set(this.errorDetail(error, 'Não foi possível solicitar a alteração.')),
       });
   }
 
@@ -174,7 +258,8 @@ export class AccountPage {
     }
 
     this.isExporting.set(true);
-    this.api.exportAccount(this.exportForm.controls.password.value)
+    this.api
+      .exportAccount(this.exportForm.controls.password.value)
       .pipe(finalize(() => this.isExporting.set(false)))
       .subscribe({
         next: (file) => {
@@ -187,9 +272,8 @@ export class AccountPage {
           this.exportForm.reset();
           this.exportMessage.set('Exportação concluída.');
         },
-        error: (error: unknown) => this.exportMessage.set(
-          this.errorDetail(error, 'Não foi possível exportar os dados.'),
-        ),
+        error: (error: unknown) =>
+          this.exportMessage.set(this.errorDetail(error, 'Não foi possível exportar os dados.')),
       });
   }
 
@@ -201,7 +285,8 @@ export class AccountPage {
     }
 
     this.isDeleting.set(true);
-    this.api.deleteAccount(this.deletionForm.getRawValue())
+    this.api
+      .deleteAccount(this.deletionForm.getRawValue())
       .pipe(finalize(() => this.isDeleting.set(false)))
       .subscribe({
         next: () => {
@@ -210,10 +295,12 @@ export class AccountPage {
           void this.router.navigate(['/login'], { queryParams: { accountDeleted: 'true' } });
         },
         error: (error: unknown) => {
-          this.deletionMessage.set(this.errorDetail(
-            error,
-            'Não foi possível excluir a conta. Verifique as pendências e tente novamente.',
-          ));
+          this.deletionMessage.set(
+            this.errorDetail(
+              error,
+              'Não foi possível excluir a conta. Verifique as pendências e tente novamente.',
+            ),
+          );
           this.loadDeletionEligibility();
         },
       });
@@ -221,14 +308,24 @@ export class AccountPage {
 
   protected loadDeletionEligibility(): void {
     this.isCheckingDeletion.set(true);
-    this.api.getAccountDeletionEligibility()
+    this.api
+      .getAccountDeletionEligibility()
       .pipe(finalize(() => this.isCheckingDeletion.set(false)))
       .subscribe({
         next: (eligibility) => this.deletionEligibility.set(eligibility),
-        error: () => this.deletionMessage.set(
-          'Não foi possível verificar as pendências para exclusão.',
-        ),
+        error: () =>
+          this.deletionMessage.set('Não foi possível verificar as pendências para exclusão.'),
       });
+  }
+
+  private loadNotificationPreferences(): void {
+    this.api.getNotificationPreferences().subscribe({
+      next: (response) => this.notificationPreferences.set(response.preferences),
+      error: () =>
+        this.notificationPreferencesMessage.set(
+          'Não foi possível carregar as preferências de eventos.',
+        ),
+    });
   }
 
   private errorDetail(error: unknown, fallback: string): string {

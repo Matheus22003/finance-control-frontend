@@ -5,7 +5,7 @@ WORKDIR /workspace
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 
-COPY angular.json tsconfig.json tsconfig.app.json tsconfig.spec.json ./
+COPY angular.json ngsw-config.json tsconfig.json tsconfig.app.json tsconfig.spec.json ./
 COPY public ./public
 COPY src ./src
 
