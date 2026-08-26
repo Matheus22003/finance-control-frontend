@@ -449,6 +449,49 @@ export interface NotificationSyncResponse {
   syncedAt: string;
 }
 
+export type NotificationChannel = 'inAppEnabled' | 'pushEnabled' | 'emailEnabled';
+
+export interface NotificationPreferenceItemResponse {
+  type: NotificationType;
+  category: 'SOCIAL' | 'DEBTS' | 'FINANCE';
+  label: string;
+  inAppEnabled: boolean;
+  pushEnabled: boolean;
+  emailEnabled: boolean;
+}
+
+export interface NotificationPreferencesResponse {
+  preferences: NotificationPreferenceItemResponse[];
+}
+
+export interface UpdateNotificationPreferencesRequest {
+  preferences: Array<
+    Pick<
+      NotificationPreferenceItemResponse,
+      'type' | 'inAppEnabled' | 'pushEnabled' | 'emailEnabled'
+    >
+  >;
+}
+
+export interface PushNotificationConfigurationResponse {
+  isConfigured: boolean;
+  publicKey: string | null;
+}
+
+export interface CreatePushSubscriptionRequest {
+  endpoint: string;
+  p256Dh: string;
+  auth: string;
+  deviceName: string;
+}
+
+export interface PushSubscriptionResponse {
+  id: string;
+  deviceName: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RecentTransaction {
   id: string;
   description: string;

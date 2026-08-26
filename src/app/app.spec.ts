@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { App } from './app';
 import { ThemeService } from './core/theme/theme.service';
+import { WebPushNotificationService } from './core/notifications/web-push-notification.service';
 
 describe('App', () => {
   beforeEach(async () => {
@@ -14,6 +15,10 @@ describe('App', () => {
         {
           provide: ThemeService,
           useValue: { preference: signal('system') },
+        },
+        {
+          provide: WebPushNotificationService,
+          useValue: { initialize: vi.fn() },
         },
       ],
     }).compileComponents();

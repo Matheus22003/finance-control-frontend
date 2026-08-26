@@ -36,6 +36,11 @@ import {
   PaymentResponse,
   RecordSettlementTransferRequest,
   NotificationResponse,
+  NotificationPreferencesResponse,
+  UpdateNotificationPreferencesRequest,
+  PushNotificationConfigurationResponse,
+  CreatePushSubscriptionRequest,
+  PushSubscriptionResponse,
   NotificationSyncResponse,
   NotificationUnreadCountResponse,
   RecentTransaction,
@@ -174,6 +179,48 @@ export class FinanceControlApiService {
 
   markAllNotificationsAsRead(): Observable<NotificationUnreadCountResponse> {
     return this.http.post<NotificationUnreadCountResponse>('/api/v1/notifications/read-all', null);
+  }
+
+  getNotificationPreferences(): Observable<NotificationPreferencesResponse> {
+    return this.http.get<NotificationPreferencesResponse>('/api/v1/notifications/preferences');
+  }
+
+  updateNotificationPreferences(
+    request: UpdateNotificationPreferencesRequest,
+  ): Observable<NotificationPreferencesResponse> {
+    return this.http.put<NotificationPreferencesResponse>(
+      '/api/v1/notifications/preferences',
+      request,
+    );
+  }
+
+  getPushNotificationConfiguration(): Observable<PushNotificationConfigurationResponse> {
+    return this.http.get<PushNotificationConfigurationResponse>(
+      '/api/v1/notifications/push/configuration',
+    );
+  }
+
+  getPushSubscriptions(): Observable<PushSubscriptionResponse[]> {
+    return this.http.get<PushSubscriptionResponse[]>('/api/v1/notifications/push/subscriptions');
+  }
+
+  createPushSubscription(
+    request: CreatePushSubscriptionRequest,
+  ): Observable<PushSubscriptionResponse> {
+    return this.http.post<PushSubscriptionResponse>(
+      '/api/v1/notifications/push/subscriptions',
+      request,
+    );
+  }
+
+  removePushSubscription(subscriptionId: string): Observable<void> {
+    return this.http.delete<void>(`/api/v1/notifications/push/subscriptions/${subscriptionId}`);
+  }
+
+  unsubscribeCurrentPushEndpoint(endpoint: string): Observable<void> {
+    return this.http.post<void>('/api/v1/notifications/push/subscriptions/unsubscribe', {
+      endpoint,
+    });
   }
 
   createIncome(request: IncomeRequest): Observable<IncomeResponse> {
