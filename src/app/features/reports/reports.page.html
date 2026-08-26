@@ -1,0 +1,244 @@
+<section class="reports-page">
+  <header class="page-header">
+    <div>
+      <span class="eyebrow">Histórico analítico</span>
+      <h1>Relatórios</h1>
+      <p>Entenda para onde seu dinheiro foi e como suas dívidas evoluíram.</p>
+    </div>
+    <button class="export-button" type="button" (click)="downloadCsv()" [disabled]="exporting()">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+      </svg>
+      {{ exporting() ? 'Exportando…' : 'Exportar CSV' }}
+    </button>
+  </header>
+
+  <form class="period-card" (submit)="$event.preventDefault(); loadReport()">
+    <label>
+      <span>Mês inicial</span>
+      <input type="month" [value]="fromMonth()" (change)="updateFromMonth($event)" />
+    </label>
+    <label>
+      <span>Mês final</span>
+      <input type="month" [value]="toMonth()" (change)="updateToMonth($event)" />
+    </label>
+    <button type="submit" [disabled]="loading()">
+      {{ loading() ? 'Analisando…' : 'Aplicar período' }}
+    </button>
+    <small>Até 24 meses por consulta.</small>
+  </form>
+
+  @if (errorMessage()) {
+    <div class="feedback error" role="alert">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="summary-grid" aria-label="Carregando relatório">
+      @for (item of [1, 2, 3, 4, 5, 6]; track item) {
+        <div class="summary-card skeleton"></div>
+      }
+    </div>
+  } @else if (report(); as data) {
+    <div class="period-summary">
+      <span>{{ monthLabel(data.fromMonth) }} — {{ monthLabel(data.toMonth) }}</span>
+      <small>Atualizado em {{ data.generatedAt | date: 'dd/MM/yyyy HH:mm' }}</small>
+    </div>
+
+    <section class="summary-grid" aria-label="Resumo do período">
+      <article class="summary-card income">
+        <span>Receitas</span>
+        <strong>{{ data.finance.totalIncome | currency: 'BRL' }}</strong>
+        <small>{{ data.finance.incomeCount }} lançamento(s)</small>
+      </article>
+      <article class="summary-card expense">
+        <span>Despesas</span>
+        <strong>{{ data.finance.totalExpenses | currency: 'BRL' }}</strong>
+        <small>{{ data.finance.expenseCount }} lançamento(s)</small>
+      </article>
+      <article class="summary-card" [class.negative]="data.finance.balance < 0">
+        <span>Saldo do período</span>
+        <strong>{{ data.finance.balance | currency: 'BRL' }}</strong>
+        <small>{{ data.finance.savingsRatePercentage | number: '1.0-2' }}% das receitas</small>
+      </article>
+      <article class="summary-card debt">
+        <span>Você deve</span>
+        <strong>{{ data.debts.totalOwed | currency: 'BRL' }}</strong>
+        <small>{{ data.debts.openDebtsCount }} dívida(s) aberta(s)</small>
+      </article>
+      <article class="summary-card receive">
+        <span>A receber</span>
+        <strong>{{ data.debts.totalToReceive | currency: 'BRL' }}</strong>
+        <small>{{ data.debts.paidDebtsCount }} dívida(s) quitada(s)</small>
+      </article>
+      <article class="summary-card">
+        <span>Volume compartilhado</span>
+        <strong>{{ data.debts.totalVolume | currency: 'BRL' }}</strong>
+        <small>Dívidas criadas no período</small>
+      </article>
+    </section>
+
+    <section class="highlights-grid" aria-label="Destaques do relatório">
+      <article>
+        <span>Média mensal de receitas</span
+        ><strong>{{ data.highlights.averageMonthlyIncome | currency: 'BRL' }}</strong>
+      </article>
+      <article>
+        <span>Média mensal de despesas</span
+        ><strong>{{ data.highlights.averageMonthlyExpenses | currency: 'BRL' }}</strong>
+      </article>
+      <article>
+        <span>Melhor saldo</span><strong>{{ monthLabel(data.highlights.bestBalanceMonth) }}</strong>
+      </article>
+      <article>
+        <span>Maior categoria</span
+        ><strong>{{ data.highlights.highestExpenseCategory ?? 'Sem despesas' }}</strong>
+      </article>
+    </section>
+
+    <article class="surface-card trend-card">
+      <header>
+        <div>
+          <span class="section-kicker">Fluxo financeiro</span>
+          <h2>Evolução mensal</h2>
+        </div>
+        <div class="legend">
+          <span class="income-dot">Receitas</span><span class="expense-dot">Despesas</span>
+        </div>
+      </header>
+      @if (data.finance.months.length > 0) {
+        <div class="chart" role="img" aria-label="Comparação mensal entre receitas e despesas">
+          @for (month of data.finance.months; track month.referenceMonth) {
+            <div class="chart-column">
+              <div class="bars">
+                <span
+                  class="bar income-bar"
+                  [style.height.%]="chartHeight(month.totalIncome, data)"
+                  [title]="'Receitas: ' + (month.totalIncome | currency: 'BRL')"
+                ></span>
+                <span
+                  class="bar expense-bar"
+                  [style.height.%]="chartHeight(month.totalExpenses, data)"
+                  [title]="'Despesas: ' + (month.totalExpenses | currency: 'BRL')"
+                ></span>
+              </div>
+              <strong [class.negative-text]="month.balance < 0">{{
+                month.balance | currency: 'BRL'
+              }}</strong>
+              <small>{{ monthLabel(month.referenceMonth) }}</small>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-state">Nenhum lançamento no período selecionado.</div>
+      }
+    </article>
+
+    <section class="analysis-grid">
+      <article class="surface-card category-card">
+        <header>
+          <div>
+            <span class="section-kicker">Despesas</span>
+            <h2>Por categoria</h2>
+          </div>
+        </header>
+        <div class="category-list">
+          @for (category of data.finance.expenseCategories; track category.category) {
+            <div class="category-row">
+              <span class="category-copy"
+                ><strong>{{ category.name }}</strong
+                ><small>{{ category.percentage | number: '1.0-1' }}% do total</small></span
+              >
+              <span class="category-value">{{ category.amount | currency: 'BRL' }}</span>
+              <span class="progress"><i [style.width.%]="category.percentage"></i></span>
+            </div>
+          } @empty {
+            <div class="empty-state">Nenhuma despesa categorizada neste período.</div>
+          }
+        </div>
+      </article>
+
+      <article class="surface-card category-card">
+        <header>
+          <div>
+            <span class="section-kicker">Dívidas</span>
+            <h2>Origem da posição</h2>
+          </div>
+        </header>
+        <div class="debt-category-list">
+          @for (category of data.debts.categories; track category.category) {
+            <div class="debt-category-row">
+              <span
+                ><strong>{{ debtCategoryName(category.category) }}</strong
+                ><small
+                  >{{ category.debtCount }} dívida(s) · volume
+                  {{ category.totalVolume | currency: 'BRL' }}</small
+                ></span
+              >
+              <span class="debt-values"
+                ><small>Deve {{ category.totalOwed | currency: 'BRL' }}</small
+                ><strong>Recebe {{ category.totalToReceive | currency: 'BRL' }}</strong></span
+              >
+            </div>
+          } @empty {
+            <div class="empty-state">Nenhuma dívida criada neste período.</div>
+          }
+        </div>
+      </article>
+    </section>
+
+    <section class="analysis-grid">
+      <article class="surface-card list-card">
+        <header>
+          <div>
+            <span class="section-kicker">Maiores saídas</span>
+            <h2>Top despesas</h2>
+          </div>
+        </header>
+        <div class="ranked-list">
+          @for (expense of data.finance.topExpenses; track expense.id; let index = $index) {
+            <div>
+              <span class="rank">{{ index + 1 }}</span
+              ><span class="item-copy"
+                ><strong>{{ expense.description }}</strong
+                ><small
+                  >{{ expense.categoryName }} ·
+                  {{ expense.transactionDate | date: 'dd/MM/yyyy' }}</small
+                ></span
+              ><strong>{{ expense.amount | currency: 'BRL' }}</strong>
+            </div>
+          } @empty {
+            <div class="empty-state">Nenhuma despesa para destacar.</div>
+          }
+        </div>
+      </article>
+
+      <article class="surface-card list-card">
+        <header>
+          <div>
+            <span class="section-kicker">Maiores posições</span>
+            <h2>Top dívidas</h2>
+          </div>
+        </header>
+        <div class="ranked-list">
+          @for (debt of data.debts.topDebts; track debt.id; let index = $index) {
+            <div>
+              <span class="rank">{{ index + 1 }}</span
+              ><span class="item-copy"
+                ><strong>{{ debt.description }}</strong
+                ><small
+                  >{{ debtCategoryName(debt.category) }} ·
+                  {{ debt.status === 'PAID' ? 'Quitada' : 'Aberta' }}</small
+                ></span
+              ><span class="debt-values"
+                ><small>Deve {{ debt.totalOwed | currency: 'BRL' }}</small
+                ><strong>Recebe {{ debt.totalToReceive | currency: 'BRL' }}</strong></span
+              >
+            </div>
+          } @empty {
+            <div class="empty-state">Nenhuma dívida para destacar.</div>
+          }
+        </div>
+      </article>
+    </section>
+  }
+</section>

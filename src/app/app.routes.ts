@@ -74,6 +74,12 @@ export const routes: Routes = [
         title: 'Dívidas | Finance Control',
       },
       {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/reports/reports.page').then((module) => module.ReportsPage),
+        title: 'Relatórios | Finance Control',
+      },
+      {
         path: 'social',
         loadComponent: () =>
           import('./features/social/social.page').then((module) => module.SocialPage),
