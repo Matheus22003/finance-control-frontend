@@ -31,7 +31,7 @@ Na mesma seção, o usuário pode fazer perguntas simples por `POST /api/v1/ai/a
 - Tema `light`, `dark` ou baseado no dispositivo.
 - Sidebar em desktop e bottom navigation em mobile.
 - Nenhuma chamada direta ao Finance Service ou Debt Service.
-- Central de notificações persistente com atualização via SignalR, reconexão automática e sincronização deduplicada de alertas financeiros.
+- Central de notificações persistente com atualização via SignalR, reconexão automática, sincronização deduplicada, preferências por evento/canal e Web Push instalável.
 - Tela de Finanças com filtro mensal, categorias padrão e personalizadas, limites de orçamento, lançamentos semanais, mensais ou anuais, metas financeiras com aportes manuais ou vinculados ao saldo disponível de receitas, detalhamento de como cada receita foi distribuída e projeção de caixa para seis meses.
 
 ## Rotas
@@ -76,6 +76,16 @@ A segunda conta local usa `friend@financecontrol.local` com a mesma senha. Ela p
 Quando uma conta altera amizades, grupos, dívidas ou pagamentos, a outra recebe a notificação sem recarregar a página. Alertas de orçamento e metas próximas do prazo, atrasadas ou concluídas também aparecem na central. Dashboard, finanças, dívidas, badges e área social refazem somente as consultas relacionadas ao tipo de evento recebido.
 
 Ao iniciar ou reconectar, o cliente chama `POST /api/v1/notifications/sync` e depois consulta novamente a caixa persistente. Esse fluxo funciona como fallback quando o transporte em tempo real estiver indisponível e pode ser reutilizado pelos futuros aplicativos iOS e Android.
+
+Em **Minha conta**, cada evento pode ser habilitado separadamente na caixa do
+aplicativo, no Push e no e-mail. A mesma tela registra o navegador atual e
+revoga outros dispositivos. A integração usa `@angular/service-worker`
+`22.1.0`; cliques em Push abrem diretamente a rota relacionada ao evento.
+
+O service worker é gerado somente no build de produção. Portanto, teste Push no
+container local (`http://localhost`, que é um contexto seguro para service
+workers) ou no endereço HTTPS da Vercel; `npm start` mantém o modo de
+desenvolvimento sem service worker.
 
 ## Build e testes
 
@@ -154,14 +164,15 @@ mesma origem.
 
 Configuração do projeto:
 
-| Campo | Valor |
-|---|---|
-| Framework preset | `Angular` |
-| Build command | `npm run build` |
+| Campo                  | Valor                                   |
+| ---------------------- | --------------------------------------- |
+| Framework preset       | `Angular`                               |
+| Build command          | `npm run build`                         |
 | Build output directory | `dist/finance-control-frontend/browser` |
-| Node.js | `26.4.0` |
+| Node.js                | `26.4.0`                                |
 
-O frontend não exige secrets na Vercel. O endereço público do BFF está no
+O frontend não exige secrets na Vercel. A chave VAPID pública é obtida por um
+endpoint protegido do BFF; a chave privada nunca entra no bundle Angular. O endereço público do BFF está no
 destino do rewrite e pode ser trocado no `vercel.json` sem alterar o código
 Angular. O zrok é o único cliente público da rede `edge-network`; BFF, Finance
 Service e Debt Service permanecem sem portas publicadas no host.
