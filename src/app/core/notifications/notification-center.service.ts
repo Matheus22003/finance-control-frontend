@@ -46,10 +46,9 @@ export class NotificationCenterService {
     this.connection = new HubConnectionBuilder()
       .withUrl(hubConfiguration.url, {
         accessTokenFactory: () => this.authService.accessToken() ?? '',
-        ...(hubConfiguration.directWebSocket
+        ...(hubConfiguration.useLongPolling
           ? {
-              skipNegotiation: true,
-              transport: HttpTransportType.WebSockets,
+              transport: HttpTransportType.LongPolling,
             }
           : {}),
       })
