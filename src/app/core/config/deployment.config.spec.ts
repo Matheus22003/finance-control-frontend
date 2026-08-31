@@ -6,14 +6,14 @@ describe('getNotificationHubConfiguration', () => {
   it('keeps the SignalR hub on the same origin outside Vercel', () => {
     expect(getNotificationHubConfiguration('localhost')).toEqual({
       url: '/api/v1/notifications/hub',
-      directWebSocket: false,
+      useLongPolling: false,
     });
   });
 
-  it('uses the zrok WebSocket endpoint on Vercel', () => {
+  it('uses the zrok hub with Long Polling on Vercel', () => {
     expect(getNotificationHubConfiguration('finance-control-frontend-gamma.vercel.app')).toEqual({
       url: 'https://finance-control.shares.zrok.io/api/v1/notifications/hub',
-      directWebSocket: true,
+      useLongPolling: true,
     });
   });
 });
