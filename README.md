@@ -157,10 +157,11 @@ o BFF e mantém a regra de que o frontend nunca acessa os microserviços
 diretamente. As respostas da API não são armazenadas no CDN.
 
 O upgrade WebSocket não atravessa o rewrite externo da Vercel. Por isso,
-somente quando o hostname termina em `.vercel.app`, o cliente SignalR acessa o
-hub público do BFF via zrok usando Long Polling, com a negociação HTTP normal e
-JWT. Em localhost e no container Nginx, o hub continua relativo e passa pelo
-proxy da mesma origem.
+somente quando o hostname termina em `.vercel.app`, o cliente SignalR usa Long
+Polling. O hub continua em `/api/v1/notifications/hub`, então a negociação e as
+requisições de polling passam pelo rewrite da mesma origem e recebem o header
+`skip_zrok_interstitial` antes de chegar ao zrok, junto do JWT. Em localhost e
+no container Nginx, o hub também é relativo e preserva os transports padrão.
 
 Configuração do projeto:
 
