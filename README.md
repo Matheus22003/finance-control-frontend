@@ -29,7 +29,8 @@ Na mesma seção, o usuário pode fazer perguntas simples por `POST /api/v1/ai/a
 - Interceptor adiciona o Bearer token somente em chamadas `/api/*`.
 - Guard protege todas as rotas autenticadas.
 - Tema `light`, `dark` ou baseado no dispositivo.
-- Sidebar em desktop e bottom navigation em mobile.
+- Web desktop-first; o layout responsivo atual é apenas um fallback seguro para
+  navegador móvel, sem meta de paridade com o futuro aplicativo nativo.
 - Nenhuma chamada direta ao Finance Service ou Debt Service.
 - Central de notificações persistente com atualização via SignalR, reconexão automática, sincronização deduplicada, preferências por evento/canal e Web Push instalável.
 - Tela de Finanças com filtro mensal, categorias padrão e personalizadas, limites de orçamento, lançamentos semanais, mensais ou anuais, metas financeiras com aportes manuais ou vinculados ao saldo disponível de receitas, detalhamento de como cada receita foi distribuída e projeção de caixa para seis meses.
@@ -178,6 +179,17 @@ destino do rewrite e pode ser trocado no `vercel.json` sem alterar o código
 Angular. O zrok é o único cliente público da rede `edge-network`; BFF, Finance
 Service e Debt Service permanecem sem portas publicadas no host.
 
+## Apoio ao projeto
+
+O atalho **Apoie o projeto** fica fora dos módulos financeiros, na sidebar
+desktop. Ele é um link externo opcional para o perfil público do Buy Me a
+Coffee: não chama o BFF, não registra pagamentos e não recebe dados do usuário.
+
+Enquanto o perfil público não for configurado em
+`src/app/core/config/project-support.config.ts`, o atalho permanece desativado.
+Configure apenas uma URL `https://` do perfil oficial; ela é pública e não deve
+ser tratada como secret.
+
 ## Identidade visual
 
 A implementação segue a direção aprovada no Google Stitch:
@@ -187,4 +199,5 @@ A implementação segue a direção aprovada no Google Stitch:
 - amber para estados pendentes;
 - fundos claros suaves e dark mode azul-marinho;
 - componentes com contraste WCAG AA, estados de foco e alvos touch;
-- adaptação intencional para desktop, mobile web e futuros aplicativos iOS/Android.
+- experiência web desktop-first e fallback seguro no navegador móvel; os
+  futuros aplicativos iOS/Android serão produtos dedicados.

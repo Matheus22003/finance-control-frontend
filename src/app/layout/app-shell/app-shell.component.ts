@@ -9,6 +9,7 @@ import { NotificationResponse } from '../../core/api/api.models';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { UserProfileStateService } from '../../core/account/user-profile-state.service';
+import { getProjectSupportConfiguration } from '../../core/config/project-support.config';
 import { DialogBehaviorDirective } from '../../shared/a11y/dialog-behavior.directive';
 
 @Component({
@@ -35,6 +36,7 @@ export class AppShellComponent {
   protected readonly liveAnnouncement = signal('');
   protected readonly userInitials = this.userProfileState.initials;
   protected readonly avatarUrl = this.userProfileState.avatarObjectUrl;
+  protected readonly projectSupport = getProjectSupportConfiguration();
 
   constructor() {
     this.debtNotifications.refresh();
