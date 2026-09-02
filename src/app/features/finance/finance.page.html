@@ -388,6 +388,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="category-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeCategoryManager()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header category-modal-header">
@@ -502,6 +504,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="income-allocation-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeIncomeAllocations()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
@@ -587,6 +591,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="transaction-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeForm()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
@@ -771,6 +777,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="budget-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeBudget()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
@@ -782,6 +790,7 @@
         <button
           class="modal-close"
           type="button"
+          aria-label="Fechar orçamento"
           [disabled]="isBudgetSaving()"
           (click)="closeBudget()"
         >
@@ -846,6 +855,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="goal-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeGoal()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
@@ -860,7 +871,13 @@
             }}
           </p>
         </div>
-        <button class="modal-close" type="button" [disabled]="isGoalSaving()" (click)="closeGoal()">
+        <button
+          class="modal-close"
+          type="button"
+          aria-label="Fechar meta"
+          [disabled]="isGoalSaving()"
+          (click)="closeGoal()"
+        >
           ×
         </button>
       </header>
@@ -963,6 +980,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="contribution-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeContributions()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header contribution-header">
@@ -974,6 +993,7 @@
         <button
           class="modal-close"
           type="button"
+          aria-label="Fechar aportes"
           [disabled]="isContributionSaving() || !!contributionDeletingId()"
           (click)="closeContributions()"
         >
@@ -1161,6 +1181,8 @@
       aria-modal="true"
       aria-labelledby="delete-dialog-title"
       aria-describedby="delete-dialog-description"
+      appDialogBehavior
+      (appDialogDismiss)="cancelDelete()"
       (click)="$event.stopPropagation()"
     >
       <span class="delete-icon" aria-hidden="true">×</span>

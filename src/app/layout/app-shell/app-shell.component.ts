@@ -9,10 +9,11 @@ import { NotificationResponse } from '../../core/api/api.models';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
 import { ThemeService } from '../../core/theme/theme.service';
 import { UserProfileStateService } from '../../core/account/user-profile-state.service';
+import { DialogBehaviorDirective } from '../../shared/a11y/dialog-behavior.directive';
 
 @Component({
   selector: 'app-shell',
-  imports: [DatePipe, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [DatePipe, RouterLink, RouterLinkActive, RouterOutlet, DialogBehaviorDirective],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +32,7 @@ export class AppShellComponent {
   protected readonly notifications = this.notificationCenter.notifications;
   protected readonly unreadNotificationCount = this.notificationCenter.unreadCount;
   protected readonly notificationsOpen = signal(false);
+  protected readonly liveAnnouncement = signal('');
   protected readonly userInitials = this.userProfileState.initials;
   protected readonly avatarUrl = this.userProfileState.avatarObjectUrl;
 
@@ -38,6 +40,9 @@ export class AppShellComponent {
     this.debtNotifications.refresh();
     this.notificationCenter.start();
     this.notificationCenter.changes$.pipe(takeUntilDestroyed()).subscribe((notification) => {
+      if (!notification.isRead) {
+        this.liveAnnouncement.set(`${notification.title}. ${notification.message}`);
+      }
       if (
         notification.type.startsWith('PAYMENT_') ||
         notification.type.startsWith('SETTLEMENT_') ||

@@ -30,6 +30,7 @@ import {
 } from '../../core/api/api.models';
 import { FinanceControlApiService } from '../../core/api/finance-control-api.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
+import { DialogBehaviorDirective } from '../../shared/a11y/dialog-behavior.directive';
 
 interface CategoryOption {
   value: DebtCategory;
@@ -47,7 +48,7 @@ interface SettlementPaymentTarget {
 
 @Component({
   selector: 'app-debts-page',
-  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule],
+  imports: [CurrencyPipe, DatePipe, ReactiveFormsModule, DialogBehaviorDirective],
   templateUrl: './debts.page.html',
   styleUrl: './debts.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

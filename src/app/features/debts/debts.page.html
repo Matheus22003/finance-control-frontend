@@ -332,9 +332,7 @@
         </div>
       }
       @if (savedTransferCount() > 0) {
-        <div class="settlement-saving">
-          {{ savedTransferCount() }} transferência(s) evitada(s)
-        </div>
+        <div class="settlement-saving">{{ savedTransferCount() }} transferência(s) evitada(s)</div>
       }
       @if (settlementOperationError()) {
         <div class="settlement-error" role="alert">{{ settlementOperationError() }}</div>
@@ -354,6 +352,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="settlement-payment-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeSettlementPayment()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
@@ -361,8 +361,8 @@
           <span class="modal-eyebrow">PAGAMENTO SIMPLIFICADO</span>
           <h2 id="settlement-payment-dialog-title">Registrar transferência</h2>
           <p>
-            {{ target.transfer.fromPerson.name }} paga para
-            {{ target.transfer.toPerson.name }}. O destinatário deverá confirmar o recebimento.
+            {{ target.transfer.fromPerson.name }} paga para {{ target.transfer.toPerson.name }}. O
+            destinatário deverá confirmar o recebimento.
           </p>
         </div>
         <button
@@ -384,11 +384,7 @@
         </div>
         <div class="field">
           <label for="settlement-payment-date">Data da transferência</label>
-          <input
-            id="settlement-payment-date"
-            type="date"
-            formControlName="paymentDate"
-          />
+          <input id="settlement-payment-date" type="date" formControlName="paymentDate" />
         </div>
         <div class="field">
           <label for="settlement-payment-note">Observação <small>(opcional)</small></label>
@@ -430,6 +426,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="payment-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closePayment()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
@@ -521,6 +519,8 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="debt-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeForm()"
       (click)="$event.stopPropagation()"
     >
       <header class="modal-header">
@@ -801,6 +801,8 @@
       aria-modal="true"
       aria-labelledby="delete-debt-title"
       aria-describedby="delete-debt-description"
+      appDialogBehavior
+      (appDialogDismiss)="cancelDelete()"
       (click)="$event.stopPropagation()"
     >
       <span class="delete-icon" aria-hidden="true">×</span>
