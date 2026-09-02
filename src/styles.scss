@@ -18,7 +18,7 @@
   --status-negative-soft: #fff0ed;
   --status-pending: #c47d13;
   --status-pending-soft: #fff6df;
-  --focus-ring: rgba(8, 127, 115, 0.24);
+  --focus-ring: #006b62;
   --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
   --shadow-md: 0 12px 30px rgba(15, 23, 42, 0.08);
   --radius-sm: 10px;
@@ -46,7 +46,7 @@
   --status-negative-soft: rgba(251, 128, 111, 0.13);
   --status-pending: #f6c453;
   --status-pending-soft: rgba(246, 196, 83, 0.13);
-  --focus-ring: rgba(45, 212, 191, 0.28);
+  --focus-ring: #5eead4;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.16);
   --shadow-md: 0 16px 36px rgba(0, 0, 0, 0.24);
 }
@@ -485,7 +485,3 @@ svg {
     animation-iteration-count: 1 !important;
   }
 }
-
-
-
-

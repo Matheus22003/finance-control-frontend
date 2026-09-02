@@ -62,7 +62,7 @@ test('conecta categoria, orçamento, alerta, receita e meta financeira', async (
   await expect(budgetCategory).toContainText('85% utilizado');
 
   await page.locator('.desktop-toolbar .notification-button').click();
-  const notificationPanel = page.getByLabel('Central de notificações');
+  const notificationPanel = page.getByRole('dialog', { name: 'Notificações' });
   const budgetNotification = notificationPanel
     .locator('.notification-item')
     .filter({ hasText: `Orçamento de ${categoryName} em atenção` });
@@ -134,7 +134,7 @@ test('conecta categoria, orçamento, alerta, receita e meta financeira', async (
   await page.locator('.loading-state').waitFor({ state: 'detached' });
   await page.locator('.desktop-toolbar .notification-button').click();
   const goalNotification = page
-    .getByLabel('Central de notificações')
+    .getByRole('dialog', { name: 'Notificações' })
     .locator('.notification-item')
     .filter({ hasText: goalName });
   await expect(goalNotification).toContainText('Meta próxima do prazo', { timeout: 15_000 });

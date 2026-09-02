@@ -114,7 +114,7 @@ test('alerta orçamento excedido e bloqueia aporte acima da receita disponível'
 
   await page.locator('.desktop-toolbar .notification-button').click();
   const budgetNotification = page
-    .getByLabel('Central de notificações')
+    .getByRole('dialog', { name: 'Notificações' })
     .locator('.notification-item')
     .filter({ hasText: `Orçamento de ${categoryName} excedido` });
   await expect(budgetNotification).toBeVisible({ timeout: 15_000 });

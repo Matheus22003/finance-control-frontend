@@ -33,6 +33,7 @@ import {
 } from '../../core/api/api.models';
 import { FinanceControlApiService } from '../../core/api/finance-control-api.service';
 import { NotificationCenterService } from '../../core/notifications/notification-center.service';
+import { DialogBehaviorDirective } from '../../shared/a11y/dialog-behavior.directive';
 
 type TransactionFilter = 'all' | 'income' | 'expense';
 type TransactionKind = 'income' | 'expense';
@@ -40,7 +41,7 @@ type CategoryFilter = 'ALL' | FinanceCategory;
 
 @Component({
   selector: 'app-finance-page',
-  imports: [CurrencyPipe, DatePipe, DecimalPipe, ReactiveFormsModule],
+  imports: [CurrencyPipe, DatePipe, DecimalPipe, ReactiveFormsModule, DialogBehaviorDirective],
   templateUrl: './finance.page.html',
   styleUrl: './finance.page.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

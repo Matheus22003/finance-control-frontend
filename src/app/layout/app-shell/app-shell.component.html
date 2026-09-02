@@ -1,4 +1,5 @@
 <div class="app-shell">
+  <p class="sr-only" aria-live="polite" aria-atomic="true">{{ liveAnnouncement() }}</p>
   <aside class="sidebar" aria-label="Navegação principal">
     <a class="brand" routerLink="/dashboard" aria-label="Finance Control — início">
       <span class="brand-mark" aria-hidden="true">
@@ -9,19 +10,19 @@
     </a>
 
     <nav class="sidebar-nav">
-      <a routerLink="/dashboard" routerLinkActive="active">
+      <a routerLink="/dashboard" routerLinkActive="active" aria-label="Visão geral">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-16v4h6V4h-6Z" />
         </svg>
         <span>Visão geral</span>
       </a>
-      <a routerLink="/finance" routerLinkActive="active">
+      <a routerLink="/finance" routerLinkActive="active" aria-label="Finanças">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 6.5h16v11H4v-11Zm0 3h16M8 14h3" />
         </svg>
         <span>Finanças</span>
       </a>
-      <a routerLink="/debts" routerLinkActive="active">
+      <a routerLink="/debts" routerLinkActive="active" aria-label="Dívidas">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M8.5 14.5 6 17l-3-3 2.5-2.5m10-2L18 7l3 3-2.5 2.5M8 16l8-8M7 7h5m5 10h-5" />
         </svg>
@@ -32,13 +33,13 @@
           }}</span>
         }
       </a>
-      <a routerLink="/reports" routerLinkActive="active">
+      <a routerLink="/reports" routerLinkActive="active" aria-label="Relatórios">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M4 19V9m5 10V5m5 14v-7m5 7V3M3 19h18" />
         </svg>
         <span>Relatórios</span>
       </a>
-      <a routerLink="/people" routerLinkActive="active">
+      <a routerLink="/people" routerLinkActive="active" aria-label="Pessoas">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20m6.5-9.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-1a3 3 0 0 1 0 5.8m4.5 4.7v-1.5a4 4 0 0 0-3-3.87"
@@ -46,7 +47,7 @@
         </svg>
         <span>Pessoas</span>
       </a>
-      <a routerLink="/social" routerLinkActive="active">
+      <a routerLink="/social" routerLinkActive="active" aria-label="Amigos e grupos">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path
             d="M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm8-1a2.5 2.5 0 1 0 0-5m-8 9c-3 0-5 1.6-5 4v1h10v-1c0-2.4-2-4-5-4Zm7 1c2.8 0 5 1.4 5 3.5V19h-5"
@@ -54,13 +55,13 @@
         </svg>
         <span>Amigos & grupos</span>
       </a>
-      <a routerLink="/security" routerLinkActive="active">
+      <a routerLink="/security" routerLinkActive="active" aria-label="Segurança">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 3 5 6v5c0 4.8 2.8 8.2 7 10 4.2-1.8 7-5.2 7-10V6l-7-3Zm-3 9 2 2 4-4" />
         </svg>
         <span>Segurança</span>
       </a>
-      <a routerLink="/account" routerLinkActive="active">
+      <a routerLink="/account" routerLinkActive="active" aria-label="Minha conta">
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm7 8a7 7 0 0 0-14 0" />
         </svg>
@@ -115,6 +116,8 @@
         type="button"
         (click)="toggleNotifications()"
         aria-label="Abrir notificações"
+        aria-controls="notifications-dialog"
+        [attr.aria-expanded]="notificationsOpen()"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
@@ -147,6 +150,8 @@
           type="button"
           (click)="toggleNotifications()"
           aria-label="Abrir notificações"
+          aria-controls="notifications-dialog"
+          [attr.aria-expanded]="notificationsOpen()"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
@@ -177,12 +182,23 @@
       aria-label="Fechar notificações"
       (click)="closeNotifications()"
     ></button>
-    <aside class="notification-panel" aria-label="Central de notificações">
+    <aside
+      id="notifications-dialog"
+      class="notification-panel"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="notifications-dialog-title"
+      appDialogBehavior
+      (appDialogDismiss)="closeNotifications()"
+    >
       <header>
         <div>
           <span>ATUALIZAÇÕES</span>
-          <h2>Notificações</h2>
+          <h2 id="notifications-dialog-title">Notificações</h2>
         </div>
+        <button type="button" class="notification-close" autofocus (click)="closeNotifications()">
+          Fechar
+        </button>
         @if (unreadNotificationCount() > 0) {
           <button type="button" (click)="markAllNotificationsAsRead()">
             Marcar todas como lidas
