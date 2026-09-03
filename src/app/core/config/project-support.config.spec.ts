@@ -13,10 +13,16 @@ describe('getProjectSupportConfiguration', () => {
     });
   });
 
-  it('does not expose an unsafe or malformed destination', () => {
+  it('does not expose an unsafe, malformed, or non-official destination', () => {
     expect(getProjectSupportConfiguration('http://buymeacoffee.com/financecontrol')).toEqual({
       url: null,
     });
     expect(getProjectSupportConfiguration('not a URL')).toEqual({ url: null });
+    expect(getProjectSupportConfiguration('https://buymeacoffee.com.evil.example/financecontrol')).toEqual({
+      url: null,
+    });
+    expect(getProjectSupportConfiguration('https://example.com/financecontrol')).toEqual({ url: null });
+    expect(getProjectSupportConfiguration('https://attacker@example.com/financecontrol')).toEqual({ url: null });
+    expect(getProjectSupportConfiguration('https://buymeacoffee.com/')).toEqual({ url: null });
   });
 });

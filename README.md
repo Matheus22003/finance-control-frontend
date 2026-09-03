@@ -187,8 +187,9 @@ Coffee: não chama o BFF, não registra pagamentos e não recebe dados do usuár
 
 Enquanto o perfil público não for configurado em
 `src/app/core/config/project-support.config.ts`, o atalho permanece desativado.
-Configure apenas uma URL `https://` do perfil oficial; ela é pública e não deve
-ser tratada como secret.
+Configure apenas uma URL `https://buymeacoffee.com/<perfil>` ou
+`https://www.buymeacoffee.com/<perfil>` oficial e pública; ela não deve ser
+tratada como secret.
 
 ## Identidade visual
 
