@@ -19,4 +19,14 @@ describe('getProjectSupportConfiguration', () => {
     });
     expect(getProjectSupportConfiguration('not a URL')).toEqual({ url: null });
   });
+
+  it('rejects an unrelated HTTPS destination', () => {
+    expect(getProjectSupportConfiguration('https://example.com/financecontrol')).toEqual({ url: null });
+  });
+
+  it('rejects a Buy Me a Coffee lookalike URL with credentials', () => {
+    expect(getProjectSupportConfiguration('https://buymeacoffee.com@evil.example/financecontrol')).toEqual({
+      url: null,
+    });
+  });
 });
