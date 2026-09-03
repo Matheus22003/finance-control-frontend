@@ -18,7 +18,17 @@ export function getProjectSupportConfiguration(
 
   try {
     const parsed = new URL(candidate);
-    return parsed.protocol === 'https:' ? { url: parsed.toString() } : { url: null };
+    const canonicalHosts = new Set(['buymeacoffee.com', 'www.buymeacoffee.com']);
+    const hasProfilePath = parsed.pathname.length > 1;
+    const isCanonicalProfile =
+      parsed.protocol === 'https:' &&
+      canonicalHosts.has(parsed.hostname) &&
+      !parsed.username &&
+      !parsed.password &&
+      !parsed.port &&
+      hasProfilePath;
+
+    return isCanonicalProfile ? { url: parsed.toString() } : { url: null };
   } catch {
     return { url: null };
   }
