@@ -70,12 +70,32 @@
     </nav>
 
     <div class="sidebar-bottom">
-      <button class="support-button" type="button" title="Em breve">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10Z" />
-        </svg>
-        <span>Apoie o projeto</span>
-      </button>
+      @if (projectSupport.url; as supportUrl) {
+        <a
+          class="support-button"
+          [href]="supportUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Apoie o projeto no Buy Me a Coffee; abre em nova aba"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10Z" />
+          </svg>
+          <span>Apoie o projeto</span>
+        </a>
+      } @else {
+        <button
+          class="support-button"
+          type="button"
+          disabled
+          title="Apoio será ativado quando o perfil Buy Me a Coffee for configurado"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 21s-7-4.35-7-10a4 4 0 0 1 7-2.65A4 4 0 0 1 19 11c0 5.65-7 10-7 10Z" />
+          </svg>
+          <span>Apoie o projeto</span>
+        </button>
+      }
 
       <div class="profile-card">
         <a class="avatar" routerLink="/account" aria-label="Abrir minha conta">

@@ -148,11 +148,22 @@
 
 .support-button {
   width: 100%;
+  text-decoration: none;
 }
 
 .support-button:hover {
   background: var(--status-negative-soft);
   color: var(--status-negative);
+}
+
+.support-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.support-button:disabled:hover {
+  background: transparent;
+  color: var(--text-secondary);
 }
 
 .profile-card {
