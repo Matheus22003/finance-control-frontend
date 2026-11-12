@@ -2,6 +2,28 @@
 
 SPA Angular do Finance Control. A interface combina controle financeiro pessoal e dívidas compartilhadas, consumindo exclusivamente o BFF.
 
+## Como este repositório se encaixa
+
+Este é o cliente web desktop-first do Finance Control. Ele chama somente o
+[`finance-control-bff`](https://github.com/Matheus22003/finance-control-bff) por
+`/api/v1`; nunca acessa Finance Service, Debt Service, bancos ou provedores de IA
+diretamente.
+
+### Mapa do projeto
+
+| Repositório | Papel |
+|---|---|
+| [`finance-control-frontend`](https://github.com/Matheus22003/finance-control-frontend) | SPA Angular web |
+| [`finance-control-mobile`](https://github.com/Matheus22003/finance-control-mobile) | App nativo Expo Android/iOS |
+| [`finance-control-bff`](https://github.com/Matheus22003/finance-control-bff) | API pública, autenticação e agregação |
+| [`finance-control-finance-service`](https://github.com/Matheus22003/finance-control-finance-service) | Domínio financeiro |
+| [`finance-control-debt-service`](https://github.com/Matheus22003/finance-control-debt-service) | Domínio social e dívidas |
+| [`finance-control-infra`](https://github.com/Matheus22003/finance-control-infra) | Compose, redes e deploy |
+| [`finance-control-docs`](https://github.com/Matheus22003/finance-control-docs) | Arquitetura, operação e roadmap |
+
+Arquitetura e contratos canônicos ficam no repositório de documentação. Para subir
+um ambiente completo, comece por [`finance-control-infra`](https://github.com/Matheus22003/finance-control-infra).
+
 ## Stack
 
 - Angular `22.1.0`
