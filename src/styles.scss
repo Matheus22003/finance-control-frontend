@@ -60,6 +60,7 @@
 html {
   min-width: 320px;
   min-height: 100%;
+  overflow-x: clip;
   background: var(--background-primary);
   color: var(--text-primary);
   font-family: var(--font-sans);
@@ -70,6 +71,7 @@ html {
 body {
   min-height: 100vh;
   margin: 0;
+  overflow-x: clip;
   background: var(--background-primary);
 }
 
@@ -404,7 +406,8 @@ svg {
     overflow-x: auto;
     display: flex;
     padding-bottom: 7px;
-    margin-right: -18px;
+    max-width: 100%;
+    margin-right: 0;
     scrollbar-width: none;
     scroll-snap-type: x mandatory;
   }

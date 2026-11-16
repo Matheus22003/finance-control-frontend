@@ -15,6 +15,12 @@ function currentDate(): string {
   return `${year}-${month}-${day}`;
 }
 
+function readCurrency(text: string): number {
+  const match = text.match(/R\$\s*([\d.]+,\d{2})/);
+  expect(match).not.toBeNull();
+  return Number(match![1].replace(/\./g, '').replace(',', '.'));
+}
+
 async function createTransaction(
   page: Page,
   kind: 'Receita' | 'Despesa',
@@ -44,6 +50,19 @@ test('agrega finanças no dashboard e responde perguntas com o provedor mock', a
   const question = 'Quanto gastei com alimentação?';
 
   await loginAsDemo(page);
+  await page.goto('/dashboard');
+  await expect(page.getByRole('heading', { name: 'Olá, Conta demo' })).toBeVisible();
+  const baselineIncome = readCurrency(
+    await page.locator('.summary-card').filter({ has: page.getByText('Receitas', { exact: true }) }).innerText(),
+  );
+  const baselineExpenses = readCurrency(
+    await page.locator('.summary-card').filter({ has: page.getByText('Despesas', { exact: true }) }).innerText(),
+  );
+  const baselineFoodCategory = page.locator('.category-item').filter({ hasText: 'Alimentação' });
+  const baselineFood = (await baselineFoodCategory.count()) > 0
+    ? readCurrency(await baselineFoodCategory.first().innerText())
+    : 0;
+
   await page.goto('/finance');
   await expect(page.getByRole('heading', { name: 'Finanças' })).toBeVisible();
   await page.locator('.loading-state').waitFor({ state: 'detached' });
@@ -60,10 +79,14 @@ test('agrega finanças no dashboard e responde perguntas com o provedor mock', a
   const expenseCard = page
     .locator('.summary-card')
     .filter({ has: page.getByText('Despesas', { exact: true }) });
-  await expect(incomeCard).toContainText('R$ 300,00');
-  await expect(expenseCard).toContainText('R$ 75,00');
+  await expect(incomeCard).toContainText(
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baselineIncome + 300),
+  );
+  await expect(expenseCard).toContainText(
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baselineExpenses + 75),
+  );
   await expect(page.locator('.category-item').filter({ hasText: 'Alimentação' })).toContainText(
-    'R$ 75,00',
+    new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baselineFood + 75),
   );
 
   await page.getByRole('button', { name: 'Gerar análise' }).click();
@@ -80,7 +103,9 @@ test('agrega finanças no dashboard e responde perguntas com o provedor mock', a
   await expect(conversation.locator('.ai-message.user')).toContainText(question);
   const answer = conversation.locator('.ai-message:not(.user):not(.thinking)');
   await expect(answer).toBeVisible();
-  await expect(answer.locator('p')).toContainText('Você gastou R$ 75,00 com alimentação');
+  await expect(answer.locator('p')).toContainText(
+    `Você gastou ${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baselineFood + 75)} com alimentação`,
+  );
   await expect(page.getByLabel('Sugestões de perguntas')).toContainText(question);
 
   await logout(page);
