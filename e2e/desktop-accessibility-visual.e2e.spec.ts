@@ -70,4 +70,15 @@ test.describe('Acessibilidade visual no desktop', () => {
 
     await logout(page);
   });
+
+  test('não cria overflow horizontal nas telas principais em viewport mobile', async ({ page }) => {
+    await loginAsDemo(page);
+    for (const route of ['/dashboard', '/finance', '/debts']) {
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(route);
+      await expect(page.locator('body')).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+    }
+    await logout(page);
+  });
 });

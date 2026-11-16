@@ -19,8 +19,10 @@ $managedVariables = @(
   'BFF_PORT',
   'MAILPIT_WEB_PORT',
   'BFF_AUTH_SENSITIVE_PERMIT_LIMIT',
+  'BFF_AUTH_REFRESH_PERMIT_LIMIT',
   'AI_PROVIDER',
   'AI_API_KEY',
+  'ASPNETCORE_ENVIRONMENT',
   'E2E_BASE_URL',
   'E2E_ISOLATED'
 )
@@ -37,12 +39,19 @@ $composeArguments = @(
 )
 
 try {
+  & docker @composeArguments down --volumes --remove-orphans
+  if ($LASTEXITCODE -ne 0) {
+    throw "Não foi possível limpar o ambiente Docker E2E anterior."
+  }
+
   $env:FRONTEND_PORT = '4280'
   $env:BFF_PORT = '8180'
   $env:MAILPIT_WEB_PORT = '8125'
   $env:BFF_AUTH_SENSITIVE_PERMIT_LIMIT = '1000'
+  $env:BFF_AUTH_REFRESH_PERMIT_LIMIT = '1000'
   $env:AI_PROVIDER = 'Mock'
   $env:AI_API_KEY = ''
+  $env:ASPNETCORE_ENVIRONMENT = 'Testing'
   $env:E2E_BASE_URL = 'http://localhost:4280'
   $env:E2E_ISOLATED = 'true'
 

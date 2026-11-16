@@ -31,6 +31,9 @@ export async function loginAsFriend(page: Page): Promise<void> {
 }
 
 export async function logout(page: Page): Promise<void> {
-  await page.getByRole('button', { name: 'Sair' }).click();
+  if (page.url().endsWith('/login')) return;
+  const logoutButton = page.getByRole('button', { name: 'Sair' });
+  if (!(await logoutButton.isVisible().catch(() => false))) return;
+  await logoutButton.click();
   await expect(page).toHaveURL(/\/login$/);
 }

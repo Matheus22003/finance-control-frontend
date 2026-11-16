@@ -537,6 +537,9 @@
   .app-content {
     padding: 24px 18px calc(104px + env(safe-area-inset-bottom));
     margin-left: 0;
+    box-sizing: border-box;
+    max-width: 100%;
+    overflow-x: clip;
   }
 
   .mobile-nav {
